@@ -1,3 +1,13 @@
+# Unreal Editor files
+Binaries
+Build
+Intermediate
+Saved
+StarterContent
+
+# Visual Studio files
+*.VC.db
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
