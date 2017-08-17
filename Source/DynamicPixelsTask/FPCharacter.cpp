@@ -1,5 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#define print(text) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4, FColor::White,text)
 #define COLLISION_PICKUP       ECC_GameTraceChannel1
 
 #include "FPCharacter.h"
@@ -83,7 +82,7 @@ void AFPCharacter::OnJumpEnd()
 	bPressedJump = false;
 }
 
-/*Drawing a line to check if we are near the pickUp item AND looking on it*/
+/*Drawing a line to check if we are near the picUp item AND looking on it*/
 void AFPCharacter::LineTrace()
 {
 	float MaxDistance = 150.0;
