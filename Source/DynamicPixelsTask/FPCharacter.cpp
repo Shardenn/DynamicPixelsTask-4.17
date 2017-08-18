@@ -2,9 +2,11 @@
 #define COLLISION_PICKUP       ECC_GameTraceChannel1
 
 #include "FPCharacter.h"
+#include "../Source/DynamicPixelsTask/Public/FPPlayerController.h"
 
 // Sets default values
 AFPCharacter::AFPCharacter(const FObjectInitializer& ObjectInitializer)
+	:Super(ObjectInitializer)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -52,7 +54,7 @@ void AFPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AFPCharacter::OnJumpStart);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFPCharacter::OnJumpEnd);
 	/*Binding LMB to pickup our cube*/
-	PlayerInputComponent->BindAction("TakeItem", IE_Pressed, this, &AFPCharacter::LineTrace);
+	PlayerInputComponent->BindAction("TakeItem", IE_Pressed, this, &AFPCharacter::CheckEquipped);
 	PlayerInputComponent->BindAction("ThrowItem", IE_Pressed, this, &AFPCharacter::CheckEquipped);
 }
 /*Function for forward-backward movement*/
@@ -62,6 +64,7 @@ void AFPCharacter::MoveForward(float Amount)
 	{
 		AddMovementInput(GetActorForwardVector(), Amount, false);
 	}
+	
 }
 /*Function for left-right movement*/
 void AFPCharacter::MoveRight(float Amount)
@@ -82,38 +85,40 @@ void AFPCharacter::OnJumpEnd()
 	bPressedJump = false;
 }
 
-/*Drawing a line to check if we are near the picUp item AND looking on it*/
-void AFPCharacter::LineTrace()
+void AFPCharacter::CheckViewObjectIsPickup() const
 {
-	float MaxDistance = 150.0;
-	FHitResult HitInfo;
-	FVector StartPoint = GetPlayerCamera()->GetComponentLocation();
-	FVector EndPoint = StartPoint + (GetPlayerCamera()->GetForwardVector() * MaxDistance);
-
-	GetWorld()->LineTraceSingleByChannel(HitInfo, StartPoint, EndPoint, COLLISION_PICKUP);
-
-	if ((HitInfo.bBlockingHit) && (!IsItemEquipped))
-		TakeItem(HitInfo);
 	
+	return;
 }
 
 /*Function that allows us to take our pickUp item*/
 void AFPCharacter::TakeItem(FHitResult HitInfo)
 {
 	AActor *ItemTemp = HitInfo.GetActor(); // temporary variable for Sphere actor
+	UE_LOG(LogTemp, Warning, TEXT("Normalized view vector is %s"), *HitInfo.Normal.ToString());
 	IsItemEquipped = true;
 	
 	Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent())->SetSimulatePhysics(false); // Turning physics off
 	/*Attaching pick Up to player. X and Z location of pickUp are editable from character blueprint*/
 	ItemTemp->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	FVector GrabLocation(ItemCarryDistance, 0, ItemCarryHeight);
+	FVector GrabLocation(170, 0, 10); // TODO: do it bluePrint editable
 	ItemTemp->SetActorRelativeLocation(GrabLocation);
 }
 
 void AFPCharacter::CheckEquipped()
 {
+	if (!IsItemEquipped)
+	{
+		FHitResult ViewObject;
+		AFPPlayerController *PlayerController = Cast<AFPPlayerController>(GetController());
+		if(PlayerController)
+			if (PlayerController->GetSightRayHit(ViewObject))
+				TakeItem(ViewObject);
+		return;
+	}
 	if (IsItemEquipped)
 		AFPCharacter::ThrowItem();
+	return;
 }
 
 void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->GetAttachedActors()

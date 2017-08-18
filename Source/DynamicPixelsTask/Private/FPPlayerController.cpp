@@ -4,14 +4,10 @@
 #include "../Public/FPPlayerController.h"
 #include "FPCharacter.h"
 
-void AFPPlayerController::SetPawn(APawn* InPawn)
+
+
+AFPPlayerController::AFPPlayerController()
 {
-	Super::SetPawn(InPawn);
-	if (InPawn)
-	{
-		auto PossesedPawn = Cast<AFPCharacter>(InPawn);
-		if (!ensure(PossesedPawn)) { return; }
-	}
 }
 
 void AFPPlayerController::BeginPlay()
@@ -23,7 +19,7 @@ void AFPPlayerController::BeginPlay()
 void AFPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	/*
 	FVector HitLocation;
 	if (GetSightRayHitLocation(HitLocation))
 	{
@@ -33,10 +29,21 @@ void AFPPlayerController::Tick(float DeltaTime)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Didnt hit the ball"));
 	}
+	*/
+}
+
+void AFPPlayerController::SetPawn(APawn* InPawn)
+{
+	Super::SetPawn(InPawn);
+	if (InPawn)
+	{
+		auto PossesedPawn = Cast<AFPCharacter>(InPawn);
+		if (!ensure(PossesedPawn)) { return; }
+	}
 }
 
 // Get screen location of crosshair
-bool AFPPlayerController::GetSightRayHitLocation(FVector& HitLocation) const
+bool AFPPlayerController::GetSightRayHit(FHitResult& Hit) const
 {
 	int32 ViewportSizeX, ViewportSizeY;
 	GetViewportSize(ViewportSizeX, ViewportSizeY);
@@ -45,7 +52,7 @@ bool AFPPlayerController::GetSightRayHitLocation(FVector& HitLocation) const
 	FVector LookDirection;
 	if (GetLookDirection(ScreenLocation, LookDirection))
 	{
-		if (GetLookVectorHitLocation(LookDirection, HitLocation))
+		if (GetLookVectorHitResult(LookDirection, Hit))
 		{
 			return true;
 		}
@@ -62,7 +69,7 @@ bool AFPPlayerController::GetLookDirection(FVector2D ScreenLocation, FVector & L
 }
 
 // Trace a line into the world according to look direction
-bool AFPPlayerController::GetLookVectorHitLocation(FVector CrosshairLookDirection, FVector &HittedPoint) const
+bool AFPPlayerController::GetLookVectorHitResult(FVector CrosshairLookDirection, FHitResult &HittedResult) const
 {
 	FHitResult ViewResult;
 	auto StartPoint = PlayerCameraManager->GetCameraLocation(); 
@@ -71,7 +78,7 @@ bool AFPPlayerController::GetLookVectorHitLocation(FVector CrosshairLookDirectio
 		
 	if (GetWorld()->LineTraceSingleByChannel(ViewResult, StartPoint, EndPoint, PICKUP_CHANNEL))
 	{
-		HittedPoint = ViewResult.Location;
+		HittedResult = ViewResult;
 		return true;
 	}
 	return false;

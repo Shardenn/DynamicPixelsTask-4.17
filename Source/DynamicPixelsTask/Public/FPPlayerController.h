@@ -23,15 +23,16 @@ private:
 	UPROPERTY(EditAnywhere)
 		float TakeItemDistance = 170.0;
 
-	void SetPawn(APawn* InPawn);
-
+	AFPPlayerController();
+	
 	virtual void BeginPlay() override;
-
+	void SetPawn(APawn* InPawn);
 	virtual void Tick(float DeltaTime) override;
 	
-	bool GetSightRayHitLocation(FVector&) const;
+public:
+	bool GetSightRayHit(FHitResult&) const;
 
 	bool GetLookDirection(FVector2D ScreenLocation, FVector& LookDirection) const;
 
-	bool GetLookVectorHitLocation(FVector CrosshairLookDirection, FVector &HittedPoint) const;
+	bool GetLookVectorHitResult(FVector CrosshairLookDirection, FHitResult &HittedPoint) const;
 };
