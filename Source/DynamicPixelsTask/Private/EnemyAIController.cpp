@@ -5,7 +5,7 @@ void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	UE_LOG(LogTemp, Warning, TEXT("Possesing smth"));
+	UE_LOG(LogTemp, Warning, TEXT("AI Controller is possesing smth"));
 }
 
 void AEnemyAIController::SetPawn(APawn * OurPawn)
@@ -37,12 +37,13 @@ void AEnemyAIController::Tick(float deltaTime)
 
 	if (!(PlayerActor && PossesedBot)) { return;  }
 	
+	/*
 	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()));
 	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PlayerActor->GetName()));
 	
 	UE_LOG(LogTemp, Warning, TEXT("Bot's location %s"), *PossesedBot->GetActorLocation().ToString());
 	UE_LOG(LogTemp, Warning, TEXT("Player's location %s"), *PlayerActor->GetActorLocation().ToString());
-
+	*/
 	
 }
 
@@ -64,6 +65,6 @@ void AEnemyAIController::ReachActor(AActor* Target, APawn* Bot)
 	AAIController::SetFocus(Target);
 	Bot->AddMovementInput(Bot->GetActorForwardVector(), 1.0f);
 	
-	UE_LOG(LogTemp, Warning, TEXT("Inside reachActor method %s"), *(Bot->GetActorForwardVector().ToString()));
+	//UE_LOG(LogTemp, Warning, TEXT("Inside reachActor method %s"), *(Bot->GetActorForwardVector().ToString()));
 }
 
