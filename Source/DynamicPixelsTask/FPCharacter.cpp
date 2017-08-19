@@ -54,7 +54,7 @@ void AFPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AFPCharacter::OnJumpStart);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFPCharacter::OnJumpEnd);
 	/*Binding LMB to pickup our cube*/
-	PlayerInputComponent->BindAction("TakeItem", IE_Pressed, this, &AFPCharacter::CheckEquipped);
+	PlayerInputComponent->BindAction("TakeItem", IE_Pressed, this, &AFPCharacter::CheckViewedObject);
 	PlayerInputComponent->BindAction("ThrowItem", IE_Pressed, this, &AFPCharacter::CheckEquipped);
 }
 /*Function for forward-backward movement*/
@@ -85,11 +85,59 @@ void AFPCharacter::OnJumpEnd()
 	bPressedJump = false;
 }
 
-void AFPCharacter::CheckViewObjectIsPickup() const
+void AFPCharacter::CheckViewedObject()
 {
-	
-	return;
+	if (!IsItemEquipped)
+	{
+		FVector LookDirection;
+		if (GetCrosshairLookDirection(LookDirection))
+		{
+			FHitResult ViewedResult;
+			if (GetViewedObject(LookDirection, ViewedResult))
+				TakeItem(ViewedResult);
+		}
+	}
 }
+
+bool AFPCharacter::GetCrosshairLookDirection(FVector & LookDirection) const
+{
+	int32 ViewportXSize, ViewportYSize;
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	PlayerController->GetViewportSize(ViewportXSize, ViewportYSize);
+
+	auto CrosshairScreenPosition = FVector2D(ViewportXSize * CrosshairXProportionalPos, ViewportYSize * CrosshairYProportionalPos);
+
+	FVector CameraLocation; // To be discarded
+	if (PlayerController->DeprojectScreenPositionToWorld(
+		CrosshairScreenPosition.X,
+		CrosshairScreenPosition.Y,
+		CameraLocation,
+		LookDirection)
+		)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Crosshair look direction is %s"), *LookDirection.ToString());
+		return true;
+	}
+	return false;
+}
+
+bool AFPCharacter::GetViewedObject(FVector LookDirection, FHitResult & ViewResult) const
+{
+	APlayerController * PlayerController = Cast<APlayerController>(GetController());
+	auto StartPoint = PlayerController->PlayerCameraManager->GetCameraLocation();
+	auto EndPoint = StartPoint + (MaxTakeDistance * LookDirection);
+
+	FHitResult BufferHitResult;
+	if (GetWorld()->LineTraceSingleByChannel(BufferHitResult, StartPoint, EndPoint, COLLISION_PICKUP))
+	{
+		ViewResult = BufferHitResult;
+		UE_LOG(LogTemp, Warning, TEXT("Crosshair look direction is %s"), *(BufferHitResult.GetActor()->GetName()));
+		return true;
+	}
+	return false;
+}
+
+
 
 /*Function that allows us to take our pickUp item*/
 void AFPCharacter::TakeItem(FHitResult HitInfo)
@@ -101,21 +149,11 @@ void AFPCharacter::TakeItem(FHitResult HitInfo)
 	Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent())->SetSimulatePhysics(false); // Turning physics off
 	/*Attaching pick Up to player. X and Z location of pickUp are editable from character blueprint*/
 	ItemTemp->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	FVector GrabLocation(170, 0, 10); // TODO: do it bluePrint editable
-	ItemTemp->SetActorRelativeLocation(GrabLocation);
+	ItemTemp->SetActorRelativeLocation(TakenItemPosition);
 }
 
 void AFPCharacter::CheckEquipped()
 {
-	if (!IsItemEquipped)
-	{
-		FHitResult ViewObject;
-		AFPPlayerController *PlayerController = Cast<AFPPlayerController>(GetController());
-		if(PlayerController)
-			if (PlayerController->GetSightRayHit(ViewObject))
-				TakeItem(ViewObject);
-		return;
-	}
 	if (IsItemEquipped)
 		AFPCharacter::ThrowItem();
 	return;
@@ -138,6 +176,7 @@ void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->Get
 	
 	/*Throwing object in view direction*/
 	float ThrowImpulse = 100000.0;
-	FVector ThrowVector = GetPlayerCamera()->GetForwardVector() * ThrowImpulse;
-	TempPrimitive->AddImpulse(ThrowVector);
+	FVector ThrowVector;
+	if(GetCrosshairLookDirection(ThrowVector))
+		TempPrimitive->AddImpulse(ThrowVector * ThrowImpulse);
 }

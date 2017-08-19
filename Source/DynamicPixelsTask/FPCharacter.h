@@ -34,10 +34,26 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category=Camera)
 		UCameraComponent* PlayerCamera;
 	
-	
+	/*Where is crosshair on the screen horizontally, from 0 to 1*/
+	UPROPERTY(EditAnywhere)
+		float CrosshairXProportionalPos = 0.5;
+	/*Where is crosshair on the screen vertically, from 0 to 1*/
+	UPROPERTY(EditAnywhere)
+		float CrosshairYProportionalPos = 0.5;
+	/*How far we can stay from object and take it*/
+	UPROPERTY(EditAnywhere)
+		float MaxTakeDistance = 160.0;
+	/*How fast will item fly after we throw it*/
+	UPROPERTY(EditAnywhere)
+		float ThrowImpulse = 100000;
+	/*Where taken item should be located relative to player*/
+	UPROPERTY(EditAnywhere)
+		FVector TakenItemPosition = FVector(160, 0, 0);
+
+
+
 	void TakeItem(FHitResult HitInfo);
 	void ThrowItem();
-	void LineTrace();
 	void CheckEquipped();
 
 	FORCEINLINE class USceneComponent* GetPlayerCamera() const { return PlayerCamera;  }
@@ -52,6 +68,10 @@ private:
 	void OnJumpStart();
 	void OnJumpEnd();
 
-	void CheckViewObjectIsPickup() const;
-	
+	/*Function needed to start checking viewd object if we pressed LMB*/
+	void CheckViewedObject();
+	/*Where croshiar is looking*/
+	bool GetCrosshairLookDirection(FVector& LookDirection) const;
+	/*Contains information about hitted objects if they are in PICKUP_COLLISION channel*/
+	bool GetViewedObject(FVector LookDirection, FHitResult&) const;
 };

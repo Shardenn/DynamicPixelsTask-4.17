@@ -28,11 +28,4 @@ private:
 	virtual void BeginPlay() override;
 	void SetPawn(APawn* InPawn);
 	virtual void Tick(float DeltaTime) override;
-	
-public:
-	bool GetSightRayHit(FHitResult&) const;
-
-	bool GetLookDirection(FVector2D ScreenLocation, FVector& LookDirection) const;
-
-	bool GetLookVectorHitResult(FVector CrosshairLookDirection, FHitResult &HittedPoint) const;
 };
