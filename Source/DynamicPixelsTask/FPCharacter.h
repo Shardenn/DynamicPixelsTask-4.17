@@ -70,7 +70,7 @@ private:
 
 	/*Function needed to start checking viewd object if we pressed LMB*/
 	void CheckViewedObject();
-	/*Where croshiar is looking*/
+	/*Where crosshiar is looking*/
 	bool GetCrosshairLookDirection(FVector& LookDirection) const;
 	/*Contains information about hitted objects if they are in PICKUP_COLLISION channel*/
 	bool GetViewedObject(FVector LookDirection, FHitResult&) const;

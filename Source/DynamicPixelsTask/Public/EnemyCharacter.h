@@ -6,6 +6,10 @@
 #include "GameFramework/Pawn.h"
 #include "EnemyCharacter.generated.h"
 
+
+// Forward declarations
+class UAIMovementComponent;
+
 UCLASS()
 class DYNAMICPIXELSTASK_API AEnemyCharacter : public APawn
 {
@@ -13,11 +17,14 @@ class DYNAMICPIXELSTASK_API AEnemyCharacter : public APawn
 
 public:
 	// Sets default values for this pawn's properties
-	AEnemyCharacter();
+	AEnemyCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(BlueprintReadOnly)
+		UAIMovementComponent* EnemyMovementComponent = NULL;
 
 public:	
 	// Called every frame

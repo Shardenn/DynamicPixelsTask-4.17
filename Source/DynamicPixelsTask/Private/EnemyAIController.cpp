@@ -33,9 +33,15 @@ void AEnemyAIController::Tick(float deltaTime)
 	auto PlayerActor = AActor::GetWorld()->GetFirstPlayerController()->GetPawn();
 	auto PossesedBot = AController::GetPawn();
 
-	ReachActor(PlayerActor, PossesedBot);
+	if (!PlayerActor || !PossesedBot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Error in AIController - no Player or Possesed bot"));
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Possesed pawn is %s"), *(PossesedBot->GetName()));
 
-	if (!(PlayerActor && PossesedBot)) { return;  }
+	MoveToActor(PlayerActor, 150);
+
+	
 	
 	/*
 	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()));
@@ -63,8 +69,8 @@ AActor* AEnemyAIController::FindPickup()
 void AEnemyAIController::ReachActor(AActor* Target, APawn* Bot)
 {
 	AAIController::SetFocus(Target);
-	Bot->AddMovementInput(Bot->GetActorForwardVector(), 1.0f);
-	
+	MoveToActor(Target);
+	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(Target->GetName()));
 	//UE_LOG(LogTemp, Warning, TEXT("Inside reachActor method %s"), *(Bot->GetActorForwardVector().ToString()));
 }
 
