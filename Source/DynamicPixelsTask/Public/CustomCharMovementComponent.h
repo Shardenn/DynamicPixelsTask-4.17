@@ -13,8 +13,8 @@ UCLASS()
 class DYNAMICPIXELSTASK_API UCustomCharMovementComponent : public UCharacterMovementComponent
 {
 	GENERATED_BODY()
-	
-	
+
+	virtual void RequestDirectMove(const FVector&, bool) override;
 	
 	
 };

@@ -23,11 +23,13 @@ protected:
 	float AcceptableRadius = 250.0f;
 
 private:
+	AEnemyCharacter* PossesedEnemy = NULL;
+	
 	virtual AActor* FindPickup();
+
 	//virtual void SetFocus(AActor*);
 
 	virtual void BeginPlay() override;
-	virtual void SetPawn(APawn* OurPawn) override;
+	virtual void SetPawn(APawn*) override;
 	virtual void Tick(float deltaTime) override;
-	virtual void ReachActor(AActor* ActorToReach, APawn* CurrentPawn);
 };

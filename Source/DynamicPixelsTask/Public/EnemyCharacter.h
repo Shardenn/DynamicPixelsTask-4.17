@@ -8,7 +8,7 @@
 
 
 // Forward declarations
-class UAIMovementComponent;
+class UPawnAIMovementComponent;
 
 UCLASS()
 class DYNAMICPIXELSTASK_API AEnemyCharacter : public APawn
@@ -23,16 +23,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadOnly)
-		UAIMovementComponent* EnemyMovementComponent = NULL;
+	UPROPERTY(EditAnywhere)
+		UPawnAIMovementComponent* EnemyMovementComponent = NULL;
 
-public:	
+private:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	
-	
+	virtual UPawnMovementComponent* GetMovementComponent() const override;
+
 };

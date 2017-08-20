@@ -4,21 +4,19 @@
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	UE_LOG(LogTemp, Warning, TEXT("AI Controller is possesing smth"));
 }
 
 void AEnemyAIController::SetPawn(APawn * OurPawn)
 {
 	Super::SetPawn(OurPawn);
 
+
 	if (OurPawn)
 	{
 		auto PossesedBot = Cast<AEnemyCharacter>(OurPawn);
 		if (!ensure(PossesedBot)) { return; }
 
-		//UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()))
-		
+		UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()));
 	}
 	else
 	{
@@ -30,18 +28,18 @@ void AEnemyAIController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
 
-	auto PlayerActor = AActor::GetWorld()->GetFirstPlayerController()->GetPawn();
-	auto PossesedBot = AController::GetPawn();
+	auto PlayerPawn = AActor::GetWorld()->GetFirstPlayerController()->GetPawn();
+	APawn* PossesedBot = GetPawn();
+	SetPawn(PossesedBot);
 
-	if (!PlayerActor || !PossesedBot)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Error in AIController - no Player or Possesed bot"));
-	}
-	UE_LOG(LogTemp, Warning, TEXT("Possesed pawn is %s"), *(PossesedBot->GetName()));
-
-	MoveToActor(PlayerActor, 150);
-
+	if (!PlayerPawn || !PossesedBot)
+	{	return;	}
 	
+	auto PlayerActor = Cast<AActor>(PlayerPawn);
+
+	AEnemyAIController* OurController = this;
+	MoveToActor(PlayerActor);
+
 	
 	/*
 	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()));
@@ -61,16 +59,5 @@ AActor* AEnemyAIController::FindPickup()
 	}
 	*/
 	return NULL;
-}
-
-//void AEnemyAIController::SetFocus(AActor *)
-
-
-void AEnemyAIController::ReachActor(AActor* Target, APawn* Bot)
-{
-	AAIController::SetFocus(Target);
-	MoveToActor(Target);
-	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(Target->GetName()));
-	//UE_LOG(LogTemp, Warning, TEXT("Inside reachActor method %s"), *(Bot->GetActorForwardVector().ToString()));
 }
 
