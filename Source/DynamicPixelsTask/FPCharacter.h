@@ -25,7 +25,7 @@ protected:
 public:
 	AFPCharacter(const FObjectInitializer& ObjectInitializer);
 
-	bool IsItemEquipped = false;
+	bool bItemEquipped = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UStaticMeshComponent* PlayerMesh;

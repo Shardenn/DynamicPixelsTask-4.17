@@ -19,15 +19,10 @@ AEnemyCharacter::AEnemyCharacter(const FObjectInitializer& ObjectInitializer)
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GetMovementComponent())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Movement comp is %s"), *GetMovementComponent()->GetName());
-	}
-	else
+	if(!GetMovementComponent())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("BeginPlay: There is no Movement Component for this actor"));
 	}
-	
 }
 
 // Called every frame

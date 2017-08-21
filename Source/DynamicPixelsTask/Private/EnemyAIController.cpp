@@ -1,9 +1,65 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "../Public/EnemyAIController.h"
+#include "EngineUtils.h" // For actor iterator functions
+#include "PickUp.h"
+
+
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
+	PickupItem = SetPickup();
+	PlayerCharacter = GetWorld()->GetFirstPlayerController()->GetCharacter();
+	PickupItem = SetPickup();
+}
+
+void AEnemyAIController::Tick(float deltaTime)
+{
+	Super::Tick(deltaTime);
+
+	DistanceFromPlayerToPickup = GetDistanceFromPlayerToPickup();
+	CurrentDistanceToPickup = GetCurrentDistanceToPickup();
+	
+
+	//============================================// Main bot logic //============================================// 
+	if (GetDistanceFromPlayerToPickup() > MaxDistFromPlayerToPickUp) // If ball is far from player
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ball is far from player."));
+		// Turn on player movement
+		if ((PickupItem->GetAttachParentActor()) &&
+			(PickupItem->GetAttachParentActor()->GetClass()->IsChildOf(AEnemyCharacter::StaticClass())))  // If a bot already carrying the pick up
+		{
+			UE_LOG(LogTemp, Log, TEXT("%s has the pick up."), *PickupItem->GetAttachParentActor()->GetName());
+			// Surround player
+			UE_LOG(LogTemp, Warning, TEXT("Surround player."));
+		}
+		else // A parent of pick up is NOT a bot
+		{
+			// Run for a ball
+			UE_LOG(LogTemp, Warning, TEXT("Run for the ball."));
+			if ((GetCurrentDistanceToPickup() < ItemTakeRadius) && (!PickupItem->GetAttachParentActor()))
+			{
+				TakePickup();
+			}
+		}
+	}
+	else // If the pick up is close to player
+	{
+		// Surround player
+		// Turn off movement ASK about when to turn off movement TODO
+		UE_LOG(LogTemp, Log, TEXT("Ball is close from player."));
+		UE_LOG(LogTemp, Warning, TEXT("Surround player."));
+		
+		if (GetCurrentDistanceToPlayer() < MaxDistFromPlayerToPickUp - 50.f) // If bot close enough to player we should try to drop pick up
+		{
+			// Turn off player movement
+			UE_LOG(LogTemp, Log, TEXT("%s is close to player."), *GetPawn()->GetName());
+			// Drop the ball if this particular bot has it 
+			if ((PickupItem->GetAttachParentActor()) && (Cast<APawn>(PickupItem->GetAttachParentActor()) == GetPawn()))
+				UE_LOG(LogTemp, Warning, TEXT("%s should drop the ball"), *GetPawn()->GetName());
+		}
+	}
+	//============================================// Main bot logic //============================================//
 }
 
 void AEnemyAIController::SetPawn(APawn * OurPawn)
@@ -24,40 +80,58 @@ void AEnemyAIController::SetPawn(APawn * OurPawn)
 	}
 }
 
-void AEnemyAIController::Tick(float deltaTime)
+// Finding pickUp item by class APickUp and returning it
+APickUp* AEnemyAIController::SetPickup()
 {
-	Super::Tick(deltaTime);
-
-	auto PlayerPawn = AActor::GetWorld()->GetFirstPlayerController()->GetPawn();
-	APawn* PossesedBot = GetPawn();
-	SetPawn(PossesedBot);
-
-	if (!PlayerPawn || !PossesedBot)
-	{	return;	}
-	
-	auto PlayerActor = Cast<AActor>(PlayerPawn);
-
-	AEnemyAIController* OurController = this;
-	MoveToActor(PlayerActor);
-
-	
-	/*
-	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()));
-	UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PlayerActor->GetName()));
-	
-	UE_LOG(LogTemp, Warning, TEXT("Bot's location %s"), *PossesedBot->GetActorLocation().ToString());
-	UE_LOG(LogTemp, Warning, TEXT("Player's location %s"), *PlayerActor->GetActorLocation().ToString());
-	*/
-	
-}
-
-AActor* AEnemyAIController::FindPickup()
-{
-	/*for (TActorIterator<AStaticMeshActor*> ActorIt(AActor::GetWorld()); ActorIt; ++ActorIt)
+	for (TActorIterator<APickUp>ActorIt(AActor::GetWorld()); ActorIt; ++ActorIt)
 	{
-
+		if (ActorIt)
+		{
+			return *ActorIt;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Couldn't find PickUp Item in EnemyController using iterator."));
+			return NULL;
+		}
 	}
-	*/
 	return NULL;
 }
 
+// Talking for itself
+float AEnemyAIController::GetCurrentDistanceToPickup()
+{
+	if (PickupItem)
+		return GetPawn()->GetDistanceTo(Cast<AActor>(PickupItem));
+	return -1.f;
+}
+// Talking for itself
+float AEnemyAIController::GetDistanceFromPlayerToPickup()
+{
+	APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn(); // Tried to use Cast from PlayerCharacter to pawn
+																		   // but it didnt work. Use this solution for a time
+	if (PlayerPawn && PickupItem)
+	{
+		return PlayerPawn->GetHorizontalDistanceTo(PickupItem);
+	}
+	else
+	{
+		return -1.f;
+	}
+}
+
+float AEnemyAIController::GetCurrentDistanceToPlayer()
+{
+	APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
+	if (GetPawn() && PlayerPawn)
+		return GetPawn()->GetHorizontalDistanceTo(PlayerPawn);
+	return -1.0f;
+}
+
+// Attach pickUp item to bot
+void AEnemyAIController::TakePickup()
+{
+	Cast<UPrimitiveComponent>(PickupItem->GetRootComponent())->SetSimulatePhysics(false);
+	PickupItem->AttachToActor(GetPawn(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	PickupItem->SetActorRelativeLocation(TakenItemPosition);
+}

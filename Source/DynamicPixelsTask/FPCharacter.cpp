@@ -85,9 +85,10 @@ void AFPCharacter::OnJumpEnd()
 	bPressedJump = false;
 }
 
+// Called when LMB pressed to start checking bItemEquipped
 void AFPCharacter::CheckViewedObject()
 {
-	if (!IsItemEquipped)
+	if (!bItemEquipped)
 	{
 		FVector LookDirection;
 		if (GetCrosshairLookDirection(LookDirection))
@@ -99,6 +100,7 @@ void AFPCharacter::CheckViewedObject()
 	}
 }
 
+// According to crosshair offset = FVector2D( [0..1] , [0..1] ) returns look direction through crosshair
 bool AFPCharacter::GetCrosshairLookDirection(FVector & LookDirection) const
 {
 	int32 ViewportXSize, ViewportYSize;
@@ -121,6 +123,7 @@ bool AFPCharacter::GetCrosshairLookDirection(FVector & LookDirection) const
 	return false;
 }
 
+// Returns FHitResult if viewed object is out pick up object AND close enough to us
 bool AFPCharacter::GetViewedObject(FVector LookDirection, FHitResult & ViewResult) const
 {
 	APlayerController * PlayerController = Cast<APlayerController>(GetController());
@@ -131,7 +134,7 @@ bool AFPCharacter::GetViewedObject(FVector LookDirection, FHitResult & ViewResul
 	if (GetWorld()->LineTraceSingleByChannel(BufferHitResult, StartPoint, EndPoint, COLLISION_PICKUP))
 	{
 		ViewResult = BufferHitResult;
-		UE_LOG(LogTemp, Warning, TEXT("Crosshair look direction is %s"), *(BufferHitResult.GetActor()->GetName()));
+		//UE_LOG(LogTemp, Warning, TEXT("Crosshair look direction is %s"), *(BufferHitResult.GetActor()->GetName()));
 		return true;
 	}
 	return false;
@@ -143,8 +146,8 @@ bool AFPCharacter::GetViewedObject(FVector LookDirection, FHitResult & ViewResul
 void AFPCharacter::TakeItem(FHitResult HitInfo)
 {
 	AActor *ItemTemp = HitInfo.GetActor(); // temporary variable for Sphere actor
-	UE_LOG(LogTemp, Warning, TEXT("Normalized view vector is %s"), *HitInfo.Normal.ToString());
-	IsItemEquipped = true;
+	//UE_LOG(LogTemp, Warning, TEXT("Normalized view vector is %s"), *HitInfo.Normal.ToString());
+	bItemEquipped = true;
 	
 	Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent())->SetSimulatePhysics(false); // Turning physics off
 	/*Attaching pick Up to player. X and Z location of pickUp are editable from character blueprint*/
@@ -154,14 +157,14 @@ void AFPCharacter::TakeItem(FHitResult HitInfo)
 
 void AFPCharacter::CheckEquipped()
 {
-	if (IsItemEquipped)
+	if (bItemEquipped)
 		AFPCharacter::ThrowItem();
 	return;
 }
 
 void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->GetAttachedActors()
 {
-	IsItemEquipped = false;
+	bItemEquipped = false;
 
 	/*Getting all attached actors and takink [0] element as our picked up object*/
 	TArray<AActor*>PlayerAttachedActors;
