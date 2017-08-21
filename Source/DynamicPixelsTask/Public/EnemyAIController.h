@@ -9,7 +9,7 @@
 #include "EnemyAIController.generated.h"
 
 /**
- * 
+ * Forward declarations
  */
 class APickUp;
 
@@ -17,9 +17,7 @@ UCLASS()
 class DYNAMICPIXELSTASK_API AEnemyAIController : public AAIController
 {
 	GENERATED_BODY()
-	
-protected:
-	
+
 
 public:
 	AEnemyCharacter* PossesedEnemy = NULL;
@@ -50,13 +48,17 @@ private:
 	float DistanceFromPlayerToPickup = 0.f;
 
 	// These functions are talking for themselves
+	/* They return -1 if something fails (nullptr for example)
+	so we can add some check conditions before performing bot's logic */
 	float GetCurrentDistanceToPickup();
 	float GetDistanceFromPlayerToPickup();
 	float GetCurrentDistanceToPlayer();
+
 	// Attach pick up item to bot
 	void TakePickup();
+	// Detach pick up item from current bot
+	void DropPickup();
 
 	virtual void BeginPlay() override;
-	virtual void SetPawn(APawn*) override;
 	virtual void Tick(float deltaTime) override;
 };

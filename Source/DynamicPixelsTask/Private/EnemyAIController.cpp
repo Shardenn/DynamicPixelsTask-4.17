@@ -56,28 +56,13 @@ void AEnemyAIController::Tick(float deltaTime)
 			UE_LOG(LogTemp, Log, TEXT("%s is close to player."), *GetPawn()->GetName());
 			// Drop the ball if this particular bot has it 
 			if ((PickupItem->GetAttachParentActor()) && (Cast<APawn>(PickupItem->GetAttachParentActor()) == GetPawn()))
+			{
 				UE_LOG(LogTemp, Warning, TEXT("%s should drop the ball"), *GetPawn()->GetName());
+				DropPickup();
+			}
 		}
 	}
 	//============================================// Main bot logic //============================================//
-}
-
-void AEnemyAIController::SetPawn(APawn * OurPawn)
-{
-	Super::SetPawn(OurPawn);
-
-
-	if (OurPawn)
-	{
-		auto PossesedBot = Cast<AEnemyCharacter>(OurPawn);
-		if (!ensure(PossesedBot)) { return; }
-
-		UE_LOG(LogTemp, Warning, TEXT("Possesed bot that has ID %s"), *(PossesedBot->GetName()));
-	}
-	else
-	{
-
-	}
 }
 
 // Finding pickUp item by class APickUp and returning it
@@ -119,19 +104,39 @@ float AEnemyAIController::GetDistanceFromPlayerToPickup()
 		return -1.f;
 	}
 }
-
+// Talking for itself
 float AEnemyAIController::GetCurrentDistanceToPlayer()
 {
 	APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 	if (GetPawn() && PlayerPawn)
 		return GetPawn()->GetHorizontalDistanceTo(PlayerPawn);
-	return -1.0f;
+	return -1.f;
 }
 
 // Attach pickUp item to bot
 void AEnemyAIController::TakePickup()
 {
-	Cast<UPrimitiveComponent>(PickupItem->GetRootComponent())->SetSimulatePhysics(false);
+	// Turn off all physics and velocity
+	UPrimitiveComponent* PickupPrimitive = Cast<UPrimitiveComponent>(PickupItem->GetRootComponent());
+	PickupPrimitive->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));
+	PickupPrimitive->SetSimulatePhysics(false);
+
+	// Attach pick up to bot
 	PickupItem->AttachToActor(GetPawn(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	PickupItem->SetActorRelativeLocation(TakenItemPosition);
 }
+
+// Detach pick up item from current bot
+void AEnemyAIController::DropPickup()
+{
+	// Detach pick up from bot
+	PickupItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	
+	// Turn physics on and push pick up a bot forward to player
+	UPrimitiveComponent* PickupPrimitive = Cast<UPrimitiveComponent>(PickupItem->GetRootComponent());
+	PickupPrimitive->SetSimulatePhysics(true);
+	PickupPrimitive->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));
+	PickupPrimitive->AddImpulse(FVector(100, 0, 0)); // Push pick up a bit forward. Should be used with smth like LookAtPlayer()
+}
+
+
