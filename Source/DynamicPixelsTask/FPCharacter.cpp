@@ -26,6 +26,11 @@ AFPCharacter::AFPCharacter(const FObjectInitializer& ObjectInitializer)
 																								//of actor and a bit forward
 }
 
+// Used to give every bot a guaranteed unique number (needed for polar coords info)
+int32 AFPCharacter::GiveBotUniqueNumber()
+{
+	return int32(++UniqueNumber);
+}
 
 // Called when the game starts or when spawned
 void AFPCharacter::BeginPlay()

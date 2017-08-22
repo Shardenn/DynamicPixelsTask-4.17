@@ -12,6 +12,7 @@
  * Forward declarations
  */
 class APickUp;
+class AFPCharacter;
 
 UCLASS()
 class DYNAMICPIXELSTASK_API AEnemyAIController : public AAIController
@@ -35,9 +36,13 @@ public:
 
 private:
 	float  MaxDistFromPlayerToPickUp = 400.f;
+	int32 UniqueBotIndex = 0;
 	
 	// Used to set up our pickup item into variable
 	virtual APickUp* SetPickup();
+	
+	// Reference to out AFPCharacter class (Player's class)
+	AFPCharacter* FPCharacter;
 
 	// Always have a pointer to player character
 	ACharacter* PlayerCharacter = NULL;
@@ -61,6 +66,10 @@ private:
 	void TakePickup();
 	// Detach pick up item from current bot
 	void DropPickup();
+
+	// Angle between two bots standing in the circle
+	float GetAngle();
+	FVector FindLocationAroundActor(AActor*, float DistanceFromActor);
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float deltaTime) override;

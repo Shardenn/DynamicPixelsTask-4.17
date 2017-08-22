@@ -50,13 +50,11 @@ public:
 	UPROPERTY(EditAnywhere)
 		FVector TakenItemPosition = FVector(160, 0, 0);
 
-
-
-	void TakeItem(FHitResult HitInfo);
-	void ThrowItem();
-	void CheckEquipped();
-
 	FORCEINLINE class USceneComponent* GetPlayerCamera() const { return PlayerCamera;  }
+
+	// Used to give every bot a guaranteed unique number (needed for polar coords info)
+	int32 UniqueNumber = -1;
+	int32 GiveBotUniqueNumber();
 
 private:
 	virtual void BeginPlay() override;
@@ -67,6 +65,10 @@ private:
 	
 	void OnJumpStart();
 	void OnJumpEnd();
+
+	void TakeItem(FHitResult HitInfo);
+	void ThrowItem();
+	void CheckEquipped();
 
 	/*Function needed to start checking viewd object if we pressed LMB*/
 	void CheckViewedObject();

@@ -3,6 +3,7 @@
 #include "../Public/EnemyAIController.h"
 #include "EngineUtils.h" // For actor iterator functions
 #include "PickUp.h"
+#include "FPCharacter.h"
 
 
 void AEnemyAIController::BeginPlay()
@@ -13,6 +14,18 @@ void AEnemyAIController::BeginPlay()
 	PickupItem = SetPickup();
 
 	MaxDistFromPlayerToPickUp = MaxDistToPlayer + ItemTakeRadius + 50.f;
+
+	FPCharacter = Cast<AFPCharacter>(AActor::GetWorld()->GetFirstPlayerController()->GetCharacter());
+
+	if (FPCharacter)
+	{
+		UniqueBotIndex = FPCharacter->GiveBotUniqueNumber();
+		UE_LOG(LogTemp, Warning, TEXT("%s has number %d"), *GetPawn()->GetName(), UniqueBotIndex);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No FPCharacter pointer in AI Controller."));
+	}
 }
 
 void AEnemyAIController::Tick(float deltaTime)
@@ -26,20 +39,21 @@ void AEnemyAIController::Tick(float deltaTime)
 	//============================================// Main bot logic //============================================// 
 	if (GetDistanceFromPlayerToPickup() > MaxDistFromPlayerToPickUp) // If ball is far from player
 	{
-		UE_LOG(LogTemp, Log, TEXT("Ball is far from player."));
 		// TODO Turn on player movement
 		
 		if ((PickupItem->GetAttachParentActor()) &&
 			(PickupItem->GetAttachParentActor()->GetClass()->IsChildOf(AEnemyAI::StaticClass())))  // If a bot already carrying the pick up
 		{
-			UE_LOG(LogTemp, Log, TEXT("%s has the pick up."), *PickupItem->GetAttachParentActor()->GetName());
-			UE_LOG(LogTemp, Warning, TEXT("Surround player."));
-			MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
+			//MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
+			FVector MoveLocation = FindLocationAroundActor(PlayerCharacter, MaxDistToPlayer);
+			MoveToLocation(MoveLocation, 0.1);
+			// Look at player when bot is running to him
+			SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Move);
 		}
 		else // A parent of pick up is NOT a bot
 		{
+			ClearFocus(EAIFocusPriority::Move);
 			// Run for a ball
-			UE_LOG(LogTemp, Warning, TEXT("Run for the ball."));
 			MoveToActor(PickupItem, ItemTakeRadius - 0.3*ItemTakeRadius);
 			if ((GetCurrentDistanceToPickup() < ItemTakeRadius) && (!PickupItem->GetAttachParentActor()))
 			{
@@ -50,18 +64,21 @@ void AEnemyAIController::Tick(float deltaTime)
 	else // If the pick up is close to player
 	{
 		// Surround player
-		// Turn off movement ASK about when to turn off movement TODO
-		UE_LOG(LogTemp, Log, TEXT("Ball is close from player."));
-		UE_LOG(LogTemp, Warning, TEXT("Surround player."));
-		MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
+		// TODO Turn off movement ASK about when to turn off movement
+		
+		//MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
+		FVector MoveLocation = FindLocationAroundActor(PlayerCharacter, MaxDistToPlayer);
+		// Look at player when bot is running to him
+		SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Move);
+		
+		MoveToLocation(MoveLocation, 0.1);
 		if (GetCurrentDistanceToPlayer() < MaxDistFromPlayerToPickUp - 50.f) // If bot close enough to player we should try to drop pick up
 		{
-			// Turn off player movement
-			UE_LOG(LogTemp, Log, TEXT("%s is close to player."), *GetPawn()->GetName());
+			// TODO Turn off player movement
 			// Drop the ball if this particular bot has it 
 			if ((PickupItem->GetAttachParentActor()) && (Cast<APawn>(PickupItem->GetAttachParentActor()) == GetPawn()))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("%s should drop the ball"), *GetPawn()->GetName());
+				SetFocus(Cast<AActor>(PlayerCharacter));
 				DropPickup();
 			}
 		}
@@ -143,4 +160,27 @@ void AEnemyAIController::DropPickup()
 	PickupPrimitive->AddImpulse(FVector(100, 0, 0)); // Push pick up a bit forward. Should be used with smth like LookAtPlayer()
 }
 
+float AEnemyAIController::GetAngle()
+{
+	int32 Count = 0;
+	for (TActorIterator<AEnemyAI>ActorIt(AActor::GetWorld()); ActorIt; ++ActorIt)
+	{
+		Count++;
+	}
+	return (FMath::DegreesToRadians(360.f / Count));
+}
+
+FVector AEnemyAIController::FindLocationAroundActor(AActor *SurroundedActor, float DistanceFromActor)
+{
+	float XCoord = 0;
+	float YCoord = 0;
+	float CircleAngle = GetAngle();
+
+	XCoord = DistanceFromActor * FMath::Cos(UniqueBotIndex * CircleAngle);
+	YCoord = DistanceFromActor * FMath::Sin(UniqueBotIndex * CircleAngle);
+	
+	FVector RelativeLocation = FVector(XCoord, YCoord, 0);
+
+	return (SurroundedActor->GetActorLocation() + RelativeLocation);
+}
 
