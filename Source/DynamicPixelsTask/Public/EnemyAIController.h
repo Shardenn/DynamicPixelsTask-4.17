@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Runtime/Engine/Classes/GameFramework/Controller.h" // dont see SetPawn to override, lets try include
-#include "EnemyCharacter.h"
+#include "EnemyAI.h"
 #include "EnemyAIController.generated.h"
 
 /**
@@ -20,19 +20,22 @@ class DYNAMICPIXELSTASK_API AEnemyAIController : public AAIController
 
 
 public:
-	AEnemyCharacter* PossesedEnemy = NULL;
+	AEnemyAI* PossesedEnemy = NULL;
 	
-	// Max distance from player to ball to count ball as "close" to player
+	// RULE : MaxDistToPlayer + MaxDistToPickUp < MaxPlayerAndItemDistance
+	//Max distance to get to player
 	UPROPERTY(EditAnywhere)
-		float MaxDistFromPlayerToPickUp = 400.f;
+		float MaxDistToPlayer = 250.f;		
 	// Acceptable radius to take the item
 	UPROPERTY(EditAnywhere)
-		float ItemTakeRadius = 250.0f;
+		float ItemTakeRadius = 150.0f;
 	// Where should be item attached
-	UPROPERTY(BlueprintReadWrite)
-		FVector TakenItemPosition = FVector(70,0,50);
+	UPROPERTY(EditAnywhere)
+		FVector TakenItemPosition = FVector(100,0,0);
 
 private:
+	float  MaxDistFromPlayerToPickUp = 400.f;
+	
 	// Used to set up our pickup item into variable
 	virtual APickUp* SetPickup();
 

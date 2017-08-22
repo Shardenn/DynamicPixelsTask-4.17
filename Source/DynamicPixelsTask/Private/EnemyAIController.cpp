@@ -11,6 +11,8 @@ void AEnemyAIController::BeginPlay()
 	PickupItem = SetPickup();
 	PlayerCharacter = GetWorld()->GetFirstPlayerController()->GetCharacter();
 	PickupItem = SetPickup();
+
+	MaxDistFromPlayerToPickUp = MaxDistToPlayer + ItemTakeRadius + 50.f;
 }
 
 void AEnemyAIController::Tick(float deltaTime)
@@ -25,18 +27,20 @@ void AEnemyAIController::Tick(float deltaTime)
 	if (GetDistanceFromPlayerToPickup() > MaxDistFromPlayerToPickUp) // If ball is far from player
 	{
 		UE_LOG(LogTemp, Log, TEXT("Ball is far from player."));
-		// Turn on player movement
+		// TODO Turn on player movement
+		
 		if ((PickupItem->GetAttachParentActor()) &&
-			(PickupItem->GetAttachParentActor()->GetClass()->IsChildOf(AEnemyCharacter::StaticClass())))  // If a bot already carrying the pick up
+			(PickupItem->GetAttachParentActor()->GetClass()->IsChildOf(AEnemyAI::StaticClass())))  // If a bot already carrying the pick up
 		{
 			UE_LOG(LogTemp, Log, TEXT("%s has the pick up."), *PickupItem->GetAttachParentActor()->GetName());
-			// Surround player
 			UE_LOG(LogTemp, Warning, TEXT("Surround player."));
+			MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
 		}
 		else // A parent of pick up is NOT a bot
 		{
 			// Run for a ball
 			UE_LOG(LogTemp, Warning, TEXT("Run for the ball."));
+			MoveToActor(PickupItem, ItemTakeRadius - 0.3*ItemTakeRadius);
 			if ((GetCurrentDistanceToPickup() < ItemTakeRadius) && (!PickupItem->GetAttachParentActor()))
 			{
 				TakePickup();
@@ -49,7 +53,7 @@ void AEnemyAIController::Tick(float deltaTime)
 		// Turn off movement ASK about when to turn off movement TODO
 		UE_LOG(LogTemp, Log, TEXT("Ball is close from player."));
 		UE_LOG(LogTemp, Warning, TEXT("Surround player."));
-		
+		MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
 		if (GetCurrentDistanceToPlayer() < MaxDistFromPlayerToPickUp - 50.f) // If bot close enough to player we should try to drop pick up
 		{
 			// Turn off player movement
