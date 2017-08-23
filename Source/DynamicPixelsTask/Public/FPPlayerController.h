@@ -20,12 +20,8 @@ private:
 	/*Y location of crosshair proportionally to screen size*/
 	UPROPERTY(EditAnywhere)
 		float CrosshairYLocation = 0.5;
-	UPROPERTY(EditAnywhere)
-		float TakeItemDistance = 170.0;
 
 	AFPPlayerController();
 	
 	virtual void BeginPlay() override;
-	void SetPawn(APawn* InPawn);
-	virtual void Tick(float DeltaTime) override;
 };

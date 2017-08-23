@@ -15,30 +15,3 @@ void AFPPlayerController::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
-void AFPPlayerController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	/*
-	FVector HitLocation;
-	if (GetSightRayHitLocation(HitLocation))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Hitted point in pickUp channel is %s"), *HitLocation.ToString());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Didnt hit the ball"));
-	}
-	*/
-}
-
-void AFPPlayerController::SetPawn(APawn* InPawn)
-{
-	Super::SetPawn(InPawn);
-	if (InPawn)
-	{
-		auto PossesedPawn = Cast<AFPCharacter>(InPawn);
-		if (!ensure(PossesedPawn)) { return; }
-	}
-}
-

@@ -183,7 +183,6 @@ void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->Get
 	ItemTemp->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	
 	/*Throwing object in view direction*/
-	float ThrowImpulse = 100000.0;
 	FVector ThrowVector;
 	if(GetCrosshairLookDirection(ThrowVector))
 		TempPrimitive->AddImpulse(ThrowVector * ThrowImpulse);

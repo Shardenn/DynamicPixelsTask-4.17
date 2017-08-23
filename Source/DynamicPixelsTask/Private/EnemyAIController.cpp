@@ -4,7 +4,8 @@
 #include "EngineUtils.h" // For actor iterator functions
 #include "PickUp.h"
 #include "FPCharacter.h"
-
+#include "Runtime/Engine/Classes/AI/Navigation/NavigationPath.h"
+#include "Runtime/Engine/Classes/AI/Navigation/NavigationSystem.h"
 
 void AEnemyAIController::BeginPlay()
 {
@@ -13,7 +14,7 @@ void AEnemyAIController::BeginPlay()
 	PlayerCharacter = GetWorld()->GetFirstPlayerController()->GetCharacter();
 	PickupItem = SetPickup();
 
-	MaxDistFromPlayerToPickUp = MaxDistToPlayer + ItemTakeRadius + 50.f;
+	MaxDistFromPlayerToPickUp = MaxDistToPlayer + ItemTakeRadius + 30.f;
 
 	FPCharacter = Cast<AFPCharacter>(AActor::GetWorld()->GetFirstPlayerController()->GetCharacter());
 
@@ -26,33 +27,31 @@ void AEnemyAIController::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No FPCharacter pointer in AI Controller."));
 	}
+
+	
 }
 
 void AEnemyAIController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
 
-	DistanceFromPlayerToPickup = GetDistanceFromPlayerToPickup();
-	CurrentDistanceToPickup = GetCurrentDistanceToPickup();
-	
+	// TODO find a way for bots to evade movable obstacles
 
 	//============================================// Main bot logic //============================================// 
 	if (GetDistanceFromPlayerToPickup() > MaxDistFromPlayerToPickUp) // If ball is far from player
 	{
-		// TODO Turn on player movement
-		
+		PlayerCharacter->GetController()->SetIgnoreMoveInput(false);
+
 		if ((PickupItem->GetAttachParentActor()) &&
 			(PickupItem->GetAttachParentActor()->GetClass()->IsChildOf(AEnemyAI::StaticClass())))  // If a bot already carrying the pick up
 		{
-			//MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
-			FVector MoveLocation = FindLocationAroundActor(PlayerCharacter, MaxDistToPlayer);
-			MoveToLocation(MoveLocation, 0.1);
+			SurroundPlayer();
 			// Look at player when bot is running to him
-			SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Move);
+			SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Gameplay);
 		}
 		else // A parent of pick up is NOT a bot
 		{
-			ClearFocus(EAIFocusPriority::Move);
+			ClearFocus(EAIFocusPriority::Gameplay);
 			// Run for a ball
 			MoveToActor(PickupItem, ItemTakeRadius - 0.3*ItemTakeRadius);
 			if ((GetCurrentDistanceToPickup() < ItemTakeRadius) && (!PickupItem->GetAttachParentActor()))
@@ -63,22 +62,17 @@ void AEnemyAIController::Tick(float deltaTime)
 	}
 	else // If the pick up is close to player
 	{
-		// Surround player
-		// TODO Turn off movement ASK about when to turn off movement
-		
-		//MoveToActor(PlayerCharacter, MaxDistFromPlayerToPickUp - 50.f);
-		FVector MoveLocation = FindLocationAroundActor(PlayerCharacter, MaxDistToPlayer);
+		PlayerCharacter->GetController()->SetIgnoreMoveInput(true);
 		// Look at player when bot is running to him
-		SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Move);
-		
-		MoveToLocation(MoveLocation, 0.1);
+		SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Gameplay);
+		SurroundPlayer();
+
 		if (GetCurrentDistanceToPlayer() < MaxDistFromPlayerToPickUp - 50.f) // If bot close enough to player we should try to drop pick up
 		{
-			// TODO Turn off player movement
 			// Drop the ball if this particular bot has it 
 			if ((PickupItem->GetAttachParentActor()) && (Cast<APawn>(PickupItem->GetAttachParentActor()) == GetPawn()))
 			{
-				SetFocus(Cast<AActor>(PlayerCharacter));
+				SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Gameplay);
 				DropPickup();
 			}
 		}
@@ -111,6 +105,7 @@ float AEnemyAIController::GetCurrentDistanceToPickup()
 		return GetPawn()->GetDistanceTo(Cast<AActor>(PickupItem));
 	return -1.f;
 }
+
 // Talking for itself
 float AEnemyAIController::GetDistanceFromPlayerToPickup()
 {
@@ -125,6 +120,7 @@ float AEnemyAIController::GetDistanceFromPlayerToPickup()
 		return -1.f;
 	}
 }
+
 // Talking for itself
 float AEnemyAIController::GetCurrentDistanceToPlayer()
 {
@@ -157,9 +153,10 @@ void AEnemyAIController::DropPickup()
 	UPrimitiveComponent* PickupPrimitive = Cast<UPrimitiveComponent>(PickupItem->GetRootComponent());
 	PickupPrimitive->SetSimulatePhysics(true);
 	PickupPrimitive->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));
-	PickupPrimitive->AddImpulse(FVector(100, 0, 0)); // Push pick up a bit forward. Should be used with smth like LookAtPlayer()
+	PickupPrimitive->AddImpulse(FVector(1000, 0, 0)); // Push pick up a bit forward. Should be used with smth like LookAtPlayer()
 }
 
+// Calculates value that bots should depart from adjacent bots
 float AEnemyAIController::GetAngle()
 {
 	int32 Count = 0;
@@ -167,9 +164,12 @@ float AEnemyAIController::GetAngle()
 	{
 		Count++;
 	}
+	if (Count == 0)
+		return 0;
 	return (FMath::DegreesToRadians(360.f / Count));
 }
 
+// Based on bot's unique number, returnes location that a bot should reach to surroun player
 FVector AEnemyAIController::FindLocationAroundActor(AActor *SurroundedActor, float DistanceFromActor)
 {
 	float XCoord = 0;
@@ -184,3 +184,32 @@ FVector AEnemyAIController::FindLocationAroundActor(AActor *SurroundedActor, flo
 	return (SurroundedActor->GetActorLocation() + RelativeLocation);
 }
 
+// Checks if location is reachable
+bool AEnemyAIController::isPositionReachable(FVector Position)
+{
+	UNavigationPath* NavPath = UNavigationSystem::FindPathToLocationSynchronously(
+		GetWorld(), GetPawn()->GetActorLocation(),Position, NULL
+	);
+	
+	if (!NavPath)
+		return false;
+	
+	return (NavPath->IsValid());
+
+	return false;
+}
+
+// If Surround Location is reachable, goes to it. If not, just move to player
+void AEnemyAIController::SurroundPlayer()
+{
+	FVector CircleLocation = FindLocationAroundActor(PlayerCharacter, MaxDistToPlayer);
+
+	if (isPositionReachable(CircleLocation))
+	{
+		MoveToLocation(CircleLocation, 0.1);
+	}
+	else
+	{
+		MoveToActor(PlayerCharacter, MaxDistToPlayer);
+	}
+}

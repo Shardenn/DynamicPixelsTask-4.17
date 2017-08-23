@@ -35,7 +35,9 @@ public:
 		FVector TakenItemPosition = FVector(100,0,0);
 
 private:
+	// Maximum distance from player to pick up to be counted as "close"
 	float  MaxDistFromPlayerToPickUp = 400.f;
+	// Each bot has its unoque number. Needed for location them around actors
 	int32 UniqueBotIndex = 0;
 	
 	// Used to set up our pickup item into variable
@@ -49,11 +51,6 @@ private:
 
 	// Pointer for pickup item in the scene
 	APickUp* PickupItem = NULL;
-	
-	// These variables are talking for themselves I assume
-	float CurrentDistanceToPlayer = 0.f;
-	float CurrentDistanceToPickup = 0.f;
-	float DistanceFromPlayerToPickup = 0.f;
 
 	// These functions are talking for themselves
 	/* They return -1 if something fails (nullptr for example)
@@ -69,7 +66,12 @@ private:
 
 	// Angle between two bots standing in the circle
 	float GetAngle();
+	// Location around actor in distance = DistanceFromActor based on bot's unique number
 	FVector FindLocationAroundActor(AActor*, float DistanceFromActor);
+	// Checks if position is reachable by the bot
+	bool isPositionReachable(FVector Position);
+	// Either go to position in circle or just move to actor
+	void SurroundPlayer();
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float deltaTime) override;
