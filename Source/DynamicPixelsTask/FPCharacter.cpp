@@ -3,6 +3,7 @@
 
 #include "FPCharacter.h"
 #include "../Source/DynamicPixelsTask/Public/FPPlayerController.h"
+#include "Engine.h"
 
 // Sets default values
 AFPCharacter::AFPCharacter(const FObjectInitializer& ObjectInitializer)
@@ -37,7 +38,8 @@ void AFPCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	//print("We are using FPCharacter"); // check if is our custom character is created, not some default
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Silver, "Reach the other side of the room!");
 }
 
 // Called every frame
