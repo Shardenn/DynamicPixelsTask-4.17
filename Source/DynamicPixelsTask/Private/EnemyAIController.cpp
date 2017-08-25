@@ -15,13 +15,13 @@ void AEnemyAIController::BeginPlay()
 	PickupItem = SetPickup();
 
 	MaxDistFromPlayerToPickUp = MaxDistToPlayer + ItemTakeRadius + 30.f;
+	
 
 	FPCharacter = Cast<AFPCharacter>(AActor::GetWorld()->GetFirstPlayerController()->GetCharacter());
 
 	if (FPCharacter)
 	{
 		UniqueBotIndex = FPCharacter->GiveBotUniqueNumber();
-		UE_LOG(LogTemp, Warning, TEXT("%s has number %d"), *GetPawn()->GetName(), UniqueBotIndex);
 	}
 	else
 	{
@@ -36,7 +36,7 @@ void AEnemyAIController::Tick(float deltaTime)
 	Super::Tick(deltaTime);
 
 	// TODO find a way for bots to evade movable obstacles
-
+	/*
 	//============================================// Main bot logic //============================================// 
 	if (GetDistanceFromPlayerToPickup() > MaxDistFromPlayerToPickUp) // If ball is far from player
 	{
@@ -45,6 +45,7 @@ void AEnemyAIController::Tick(float deltaTime)
 		if ((PickupItem->GetAttachParentActor()) &&
 			(PickupItem->GetAttachParentActor()->GetClass()->IsChildOf(AEnemyAI::StaticClass())))  // If a bot already carrying the pick up
 		{
+			// TODO read about delegate
 			SurroundPlayer();
 			// Look at player when bot is running to him
 			SetFocus(Cast<AActor>(PlayerCharacter), EAIFocusPriority::Gameplay);
@@ -76,14 +77,14 @@ void AEnemyAIController::Tick(float deltaTime)
 				DropPickup();
 			}
 		}
-	}
+	}*/
 	//============================================// Main bot logic //============================================//
 }
 
 // Finding pickUp item by class APickUp and returning it
 APickUp* AEnemyAIController::SetPickup()
 {
-	for (TActorIterator<APickUp>ActorIt(AActor::GetWorld()); ActorIt; ++ActorIt)
+	for (TActorIterator<APickUp>ActorIt(AActor::GetWorld()); ActorIt; ++ActorIt)// obj->initialized && obj->hasbrginPlay (Actor.h 1338)
 	{
 		if (ActorIt)
 		{

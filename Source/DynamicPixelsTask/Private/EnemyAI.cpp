@@ -3,6 +3,7 @@
 #include "EnemyAI.h"
 #include "../Public/EnemyAIController.h"
 
+
 // Sets default values
 AEnemyAI::AEnemyAI()
 {
