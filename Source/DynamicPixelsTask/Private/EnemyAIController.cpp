@@ -1,15 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "../Public/EnemyAIController.h"
-#include "EngineUtils.h" // For actor iterator functions
-#include "PickUp.h"
-#include "FPCharacter.h"
-#include "Runtime/Engine/Classes/AI/Navigation/NavigationPath.h"
-#include "Runtime/Engine/Classes/AI/Navigation/NavigationSystem.h"
+#include "AIGroupManager.h"
 
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
+	/*
 	PickupItem = SetPickup();
 	PlayerCharacter = GetWorld()->GetFirstPlayerController()->GetCharacter();
 	PickupItem = SetPickup();
@@ -27,7 +24,7 @@ void AEnemyAIController::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No FPCharacter pointer in AI Controller."));
 	}
-
+	*/
 	
 }
 
@@ -81,8 +78,17 @@ void AEnemyAIController::Tick(float deltaTime)
 	//============================================// Main bot logic //============================================//
 }
 
+void AEnemyAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult & Result)
+{
+	AAIController::OnMoveCompleted(RequestID, Result);
+	if(Manager)
+		Manager->BotReachedPickupItem.Broadcast(GetPawn());
+	UE_LOG(LogTemp, Warning, TEXT("%s reached move target"), *GetName());
+	//AAIGroupManager::BotReachedPickupItem.ExecuteIfBound(GetPawn());
+}
+
 // Finding pickUp item by class APickUp and returning it
-APickUp* AEnemyAIController::SetPickup()
+/*APickUp* AEnemyAIController::SetPickup()
 {
 	for (TActorIterator<APickUp>ActorIt(AActor::GetWorld()); ActorIt; ++ActorIt)// obj->initialized && obj->hasbrginPlay (Actor.h 1338)
 	{
@@ -98,17 +104,17 @@ APickUp* AEnemyAIController::SetPickup()
 	}
 	return NULL;
 }
-
+*/
 // Talking for itself
-float AEnemyAIController::GetCurrentDistanceToPickup()
+/*float AEnemyAIController::GetCurrentDistanceToPickup()
 {
 	if (PickupItem)
 		return GetPawn()->GetDistanceTo(Cast<AActor>(PickupItem));
 	return -1.f;
-}
+}*/
 
 // Talking for itself
-float AEnemyAIController::GetDistanceFromPlayerToPickup()
+/*float AEnemyAIController::GetDistanceFromPlayerToPickup()
 {
 	APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn(); // Tried to use Cast from PlayerCharacter to pawn
 																		   // but it didnt work. Use this solution for a time
@@ -213,4 +219,4 @@ void AEnemyAIController::SurroundPlayer()
 	{
 		MoveToActor(PlayerCharacter, MaxDistToPlayer);
 	}
-}
+}*/

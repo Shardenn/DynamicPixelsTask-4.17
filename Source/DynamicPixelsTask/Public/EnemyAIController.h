@@ -4,15 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "Runtime/Engine/Classes/GameFramework/Controller.h" // dont see SetPawn to override, lets try include
-#include "EnemyAI.h"
 #include "EnemyAIController.generated.h"
 
 /**
  * Forward declarations
  */
-class APickUp;
-class AFPCharacter;
+
+class AAIGroupManager;
 
 UCLASS()
 class DYNAMICPIXELSTASK_API AEnemyAIController : public AAIController
@@ -21,7 +19,6 @@ class DYNAMICPIXELSTASK_API AEnemyAIController : public AAIController
 
 
 public:
-	AEnemyAI* PossesedEnemy = NULL;
 	
 	// RULE : MaxDistToPlayer + MaxDistToPickUp < MaxPlayerAndItemDistance
 	//Max distance to get to player
@@ -33,6 +30,8 @@ public:
 	// Where should be item attached
 	UPROPERTY(EditAnywhere)
 		FVector TakenItemPosition = FVector(100,0,0);
+	UPROPERTY(EditAnywhere)
+		AAIGroupManager* Manager = NULL;
 
 private:
 	// Maximum distance from player to pick up to be counted as "close"
@@ -40,8 +39,10 @@ private:
 	// Each bot has its unoque number. Needed for location them around actors
 	int32 UniqueBotIndex = 0;
 	
+	
 	// Used to set up our pickup item into variable
-	virtual APickUp* SetPickup();
+	
+	/*virtual APickUp* SetPickup();
 	
 	// Reference to out AFPCharacter class (Player's class)
 	AFPCharacter* FPCharacter;
@@ -54,7 +55,7 @@ private:
 
 	// These functions are talking for themselves
 	/* They return -1 if something fails (nullptr for example)
-	so we can add some check conditions before performing bot's logic */
+	so we can add some check conditions before performing bot's logic 
 	float GetCurrentDistanceToPickup();
 	float GetDistanceFromPlayerToPickup();
 	float GetCurrentDistanceToPlayer();
@@ -72,7 +73,9 @@ private:
 	bool isPositionReachable(FVector Position);
 	// Either go to position in circle or just move to actor
 	void SurroundPlayer();
-
+	*/
 	virtual void BeginPlay() override;
 	virtual void Tick(float deltaTime) override;
+
+	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 };

@@ -2,6 +2,7 @@
 
 #include "AIGroupManager.h"
 #include "EngineUtils.h"
+#include "EnemyAIController.h"
 #include "PickUp.h"
 
 // Sets default values
@@ -37,9 +38,9 @@ void AAIGroupManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	BotMoveStatus = BotControllers[0]->GetMoveStatus();
 	
 	DistanceFromPlayerToPickup = PlayerActor->GetHorizontalDistanceTo(PickupItem);
+
 
 	if (DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 10.f)
 	{
@@ -65,6 +66,8 @@ void AAIGroupManager::SetAllBotsRunToActor(AActor * Target, float AcceptanceDist
 {
 	for (auto BotItr : BotControllers)
 	{
+		FVector Offset;
+		float GoalRadius = 50, GoalHalfheight = 25;
 		if (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving)
 		{
 			BotItr->MoveToActor(Target, AcceptanceDistance);
@@ -78,7 +81,7 @@ APickUp* AAIGroupManager::FindPickupItem()
 {
 	for (TActorIterator<APickUp>ActorItr(AActor::GetWorld()); ActorItr; ++ActorItr)
 	{
-		if (ActorItr->IsActorInitialized() && ActorItr->HasActorBegunPlay())
+		//if (ActorItr->IsActorInitialized() && ActorItr->HasActorBegunPlay())
 			return *ActorItr;
 	}
 	return NULL;
@@ -86,6 +89,7 @@ APickUp* AAIGroupManager::FindPickupItem()
 
 void AAIGroupManager::AttachItemToActor(AActor* Bot)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%s is inside AttachItemToActor func"), *Bot->GetName());
 	// Turn off all physics and velocity
 	UPrimitiveComponent* PickupPrimitive = Cast<UPrimitiveComponent>(PickupItem->GetRootComponent());
 	PickupPrimitive->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));

@@ -40,7 +40,9 @@ private:
 
 	UPROPERTY()
 		TArray<AEnemyAIController*> BotControllers;
-	
+	UFUNCTION()
+		void AttachItemToActor(AActor* Parent);
+
 	float DistanceFromPlayerToPickup = 0.f;
 
 	AActor* PlayerActor = NULL;
@@ -49,7 +51,7 @@ private:
 	EPathFollowingStatus::Type BotMoveStatus;
 
 	void InitializeBotsArray();
-	void AttachItemToActor(AActor*);
+	
 	void SetAllBotsRunToActor(AActor*, float AcceptanceDistance);
 	APickUp* FindPickupItem();
 };
