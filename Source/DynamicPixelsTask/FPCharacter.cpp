@@ -151,12 +151,14 @@ bool AFPCharacter::GetViewedObject(FVector LookDirection, FHitResult & ViewResul
 void AFPCharacter::TakeItem(FHitResult HitInfo)
 {
 	AActor *ItemTemp = HitInfo.GetActor(); // temporary variable for Sphere actor
+	if (ItemTemp->GetAttachParentActor() != NULL)
+		return; // We cant take ball when a bot has it
 	//UE_LOG(LogTemp, Warning, TEXT("Normalized view vector is %s"), *HitInfo.Normal.ToString());
 	bItemEquipped = true;
 	
-	//Cast<APickUp>(ItemTemp)->TurnPhysicsOn(false);
-	UPrimitiveComponent* PrimitiveTemp = Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent());
-	PrimitiveTemp->SetSimulatePhysics(false);
+	Cast<APickUp>(ItemTemp)->TurnPhysicsOn(false);
+	//UPrimitiveComponent* PrimitiveTemp = Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent());
+	//PrimitiveTemp->SetSimulatePhysics(false);
 
 	/*Attaching pick Up to player. X and Z location of pickUp are editable from character blueprint*/
 	ItemTemp->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);

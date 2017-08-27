@@ -62,6 +62,8 @@ private:
 	void AttachItemToActor(AActor* Parent);
 	void DetachItemFromActor();
 	void CheckSurrounding();
+	void SetAllBotsLookAtPlayer();
+	bool IsPositionReachable(FVector Start, FVector Finish);
 
 	FVector LocationAroundPlayer(int32);
 

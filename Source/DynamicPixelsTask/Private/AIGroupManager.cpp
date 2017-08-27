@@ -5,7 +5,8 @@
 #include "EnemyAIController.h"
 #include "PickUp.h"
 #include "GameFramework/Character.h"
-#include "Classes/AI/Navigation/NavigationSystem.h"
+#include "Runtime/Engine/Classes/AI/Navigation/NavigationPath.h"
+#include "Runtime/Engine/Classes/AI/Navigation/NavigationSystem.h"
 
 // Sets default values
 AAIGroupManager::AAIGroupManager()
@@ -39,6 +40,14 @@ void AAIGroupManager::Tick(float DeltaTime)
 		CurrentTarget = SetAllBotsRunToActor(PickupItem, PickupAcceptanceRadius);
 	}
 	
+	if (CurrentTarget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Current target is %s"), *CurrentTarget->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Current target is null"));
+	}
 }
 
 
@@ -79,6 +88,14 @@ AActor* AAIGroupManager::SetAllBotsRunToActor(AActor * Target, float AcceptanceD
 	return Target;
 }
 
+void AAIGroupManager::SetAllBotsLookAtPlayer()
+{
+	for (auto BotItr : BotControllers)
+	{
+		BotItr->SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
+	}
+}
+
 void AAIGroupManager::StopAllBotsMovement()
 {
 	for (auto BotItr : BotControllers)
@@ -96,19 +113,22 @@ void AAIGroupManager::CheckReachedActor(AActor * MovingBot)
 	//========================================
 	if ( (CurrentTarget == PickupItem) && (!PickupItem->GetAttachParentActor()) ) // If any bot reached ball and it doesnt have parent
 	{	
+		//UE_LOG(LogTemp, Warning, TEXT("Current target is Pickup, does NOT have parent"));
 		AttachItemToActor(MovingBot);
 		StopAllBotsMovement();
 		CurrentTarget = SetAllBotsRunToActor(PlayerCharacter, MinDistanceToPlayer);	
 	}
 	else if ( (CurrentTarget == PlayerCharacter) && (!PlayerCharacter->GetController()->IsMoveInputIgnored()) ) // if any bot reached player
 	{																									// and player can move
+		//UE_LOG(LogTemp, Warning, TEXT("Current target is Player, does have input"));
 		PlayerCharacter->GetController()->SetIgnoreMoveInput(true);								//(that means that this bot is first one)
 		StopAllBotsMovement();
 		CurrentTarget = SurroundPlayer();	
 	}
 	else if (!CurrentTarget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Current target is NULL"));
+		//UE_LOG(LogTemp, Warning, TEXT("Current target is NULL"));
+		SetAllBotsLookAtPlayer();
 		CheckSurrounding();
 	}
 }
@@ -153,11 +173,29 @@ AActor* AAIGroupManager::SurroundPlayer()
 		{
 			FVector CircleLocation = PlayerCharacter->GetActorLocation() + LocationAroundPlayer(BotIndex++);
 
-			BotItr->MoveToLocation(CircleLocation, 0.1);
-			BotItr->SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
+			if (IsPositionReachable(BotItr->GetPawn()->GetActorLocation(), CircleLocation))
+			{
+				BotItr->MoveToLocation(CircleLocation);
+			}
+			else
+			{
+				BotItr->MoveToActor(PlayerCharacter, MinDistanceToPlayer);
+			}
+			//BotItr->SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
+
 		}
 	}
 	return NULL;
+}
+
+bool AAIGroupManager::IsPositionReachable(FVector StartPosition, FVector TargetPosition)
+{
+	UNavigationPath* NavPath = UNavigationSystem::FindPathToLocationSynchronously(GetWorld(), StartPosition, TargetPosition, NULL);
+
+	if (!NavPath)
+		return false;
+
+	return (NavPath->IsValid());
 }
 
 FVector AAIGroupManager::LocationAroundPlayer(int32 BotIndex)
