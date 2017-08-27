@@ -124,7 +124,6 @@ bool AFPCharacter::GetCrosshairLookDirection(FVector & LookDirection) const
 		LookDirection)
 		)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Crosshair look direction is %s"), *LookDirection.ToString());
 		return true;
 	}
 	return false;
@@ -141,7 +140,6 @@ bool AFPCharacter::GetViewedObject(FVector LookDirection, FHitResult & ViewResul
 	if (GetWorld()->LineTraceSingleByChannel(BufferHitResult, StartPoint, EndPoint, COLLISION_PICKUP))
 	{
 		ViewResult = BufferHitResult;
-		//UE_LOG(LogTemp, Warning, TEXT("Crosshair look direction is %s"), *(BufferHitResult.GetActor()->GetName()));
 		return true;
 	}
 	return false;
@@ -156,7 +154,10 @@ void AFPCharacter::TakeItem(FHitResult HitInfo)
 	//UE_LOG(LogTemp, Warning, TEXT("Normalized view vector is %s"), *HitInfo.Normal.ToString());
 	bItemEquipped = true;
 	
-	Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent())->SetSimulatePhysics(false); // Turning physics off
+	//Cast<APickUp>(ItemTemp)->TurnPhysicsOn(false);
+	UPrimitiveComponent* PrimitiveTemp = Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent());
+	PrimitiveTemp->SetSimulatePhysics(false);
+
 	/*Attaching pick Up to player. X and Z location of pickUp are editable from character blueprint*/
 	ItemTemp->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	ItemTemp->SetActorRelativeLocation(TakenItemPosition);
@@ -176,16 +177,14 @@ void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->Get
 	/*Getting all attached actors and takink [0] element as our picked up object*/
 	TArray<AActor*>PlayerAttachedActors;
 	this->GetAttachedActors(PlayerAttachedActors);
-	AActor* ItemTemp = PlayerAttachedActors[0];  
+	AActor* ItemTemp = PlayerAttachedActors[0];  // TODO check if there any object in array
 
 	/*Enabling physics and detaching item*/
-	ItemTemp->SetActorEnableCollision(true);
-	UPrimitiveComponent* TempPrimitive = Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent());
-	TempPrimitive->SetSimulatePhysics(true);
+	Cast<APickUp>(ItemTemp)->TurnPhysicsOn(true);
 	ItemTemp->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	
 	/*Throwing object in view direction*/
 	FVector ThrowVector;
 	if(GetCrosshairLookDirection(ThrowVector))
-		TempPrimitive->AddImpulse(ThrowVector * ThrowImpulse);
+		Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent())->AddImpulse(ThrowVector * ThrowImpulse);
 }

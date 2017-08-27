@@ -25,3 +25,14 @@ void APickUp::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
+void APickUp::TurnPhysicsOn(bool TurnBool)
+{
+	UPrimitiveComponent* PrimitiveTemp = Cast<UPrimitiveComponent>(GetRootComponent());
+	
+	PrimitiveTemp->SetSimulatePhysics(TurnBool);
+	if (TurnBool)
+	{
+		PrimitiveTemp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	}
+}

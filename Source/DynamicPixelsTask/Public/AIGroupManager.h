@@ -15,20 +15,24 @@ UCLASS()
 class DYNAMICPIXELSTASK_API AAIGroupManager : public AActor
 {
 	GENERATED_BODY()
-
 public:
 	// Sets default values for this actor's properties
 	AAIGroupManager();
 
 	UPROPERTY(EditAnywhere)
-		float MinDistanceToPlayer = 250.f;
+		float MinDistanceToPlayer = 200.f;
 	UPROPERTY(EditAnywhere)
 		float TakeItemDistance = 150.f;
 	UPROPERTY(EditAnywhere)
+		float PickupAcceptanceRadius = 150.f;
+	UPROPERTY(EditAnywhere)
 		FVector TakenItemPosition = FVector(120.f, 0.f, 50.f);
-
+	
+	UFUNCTION()
+		void CheckReachedActor(AActor* MovingBot);
+	
 	UPROPERTY(BlueprintAssignable)
-		FReachedPickup BotReachedPickupItem;
+		FReachedPickup WhichActorBotReached;
 
 protected:
 	// Called when the game starts or when spawned
@@ -40,19 +44,28 @@ private:
 
 	UPROPERTY()
 		TArray<AEnemyAIController*> BotControllers;
-	UFUNCTION()
-		void AttachItemToActor(AActor* Parent);
 
 	float DistanceFromPlayerToPickup = 0.f;
+	float AngleRad = 0.f;
+	int32 BotsSurroundedPlayer = 0;
 
-	AActor* PlayerActor = NULL;
+	ACharacter* PlayerCharacter = NULL;
 	APickUp* PickupItem = NULL;
+	AActor* ReachedActor = NULL;
+	AActor* CurrentTarget = NULL;
 
 	EPathFollowingStatus::Type BotMoveStatus;
 
+	AActor* SetAllBotsRunToActor(AActor*, float AcceptanceDistance);
+	AActor* SurroundPlayer();
+	void StopAllBotsMovement();
+	void AttachItemToActor(AActor* Parent);
+	void DetachItemFromActor();
+	void CheckSurrounding();
+
+	FVector LocationAroundPlayer(int32);
+
 	void InitializeBotsArray();
-	
-	void SetAllBotsRunToActor(AActor*, float AcceptanceDistance);
 	APickUp* FindPickupItem();
 };
 

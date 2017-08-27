@@ -24,7 +24,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Static mesh for Pick Up
+	UFUNCTION()
+		void TurnPhysicsOn(bool TurnBool);
+	
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* PickupMesh;
 };
