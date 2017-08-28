@@ -3,12 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-//#include "Engine/TriggerVolume.h"
-#include "Components/ActorComponent.h"
 #include "EndGameTrigger.generated.h"
 
+class UBoxComponent;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class DYNAMICPIXELSTASK_API UEndGameTrigger : public UActorComponent
 {
 	GENERATED_BODY()
@@ -17,6 +16,9 @@ public:
 	// Sets default values for this component's properties
 	UEndGameTrigger();
 
+	UPROPERTY(EditAnywhere)
+		UBoxComponent* CollisionComponent;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -24,10 +26,5 @@ protected:
 private:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	bool bGameEnded = false;
-
-	AActor* PlayerActor = NULL;
-
-	void DestroyAllBots();
+		
 };

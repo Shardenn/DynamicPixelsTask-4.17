@@ -30,7 +30,9 @@ public:
 	
 	UFUNCTION()
 		void CheckReachedActor(AActor* MovingBot);
-	
+	void EndGame();
+
+
 	UPROPERTY(BlueprintAssignable)
 		FReachedPickup WhichActorBotReached;
 
@@ -48,6 +50,7 @@ private:
 	float DistanceFromPlayerToPickup = 0.f;
 	float AngleRad = 0.f;
 	int32 BotsSurroundedPlayer = 0;
+	FVector LastPlayerPosition = FVector::ZeroVector;;
 
 	ACharacter* PlayerCharacter = NULL;
 	APickUp* PickupItem = NULL;
@@ -63,6 +66,7 @@ private:
 	void DetachItemFromActor();
 	void CheckSurrounding();
 	void SetAllBotsLookAtPlayer();
+	void TurnOffPlayerMovement();
 	bool IsPositionReachable(FVector Start, FVector Finish);
 
 	FVector LocationAroundPlayer(int32);

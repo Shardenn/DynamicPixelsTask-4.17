@@ -1,10 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "EndGameTrigger.h"
-#include "Engine/TriggerBase.h"
-#include "EngineUtils.h" // For actor iterator functions
-#include "Engine.h"
-#include "../Public/EnemyAI.h"
+#include "Runtime/Engine/Classes/Components/BoxComponent.h"
 
 // Sets default values for this component's properties
 UEndGameTrigger::UEndGameTrigger()
@@ -23,8 +20,6 @@ void UEndGameTrigger::BeginPlay()
 	Super::BeginPlay();
 
 	
-	
-	
 }
 
 
@@ -34,9 +29,3 @@ void UEndGameTrigger::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 }
-
-void UEndGameTrigger::DestroyAllBots()
-{
-	
-}
-

@@ -25,29 +25,31 @@ void AAIGroupManager::BeginPlay()
 	PlayerCharacter = AActor::GetWorld()->GetFirstPlayerController()->GetCharacter();
 	PickupItem = FindPickupItem();
 
-	WhichActorBotReached.AddDynamic(this, &AAIGroupManager::CheckReachedActor);
+	LastPlayerPosition = PlayerCharacter->GetActorLocation();
 }
 
 // Called every frame
 void AAIGroupManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	DistanceFromPlayerToPickup = Cast<AActor>(PlayerCharacter)->GetHorizontalDistanceTo(PickupItem); // Cast is needed, doesnt work otherwise
 
+	//DistanceFromPlayerToPickup = Cast<AActor>(PlayerCharacter)->GetHorizontalDistanceTo(PickupItem); // Cast is needed, doesnt work otherwise
+
+	if (!CurrentTarget)
+	{
+		DistanceFromPlayerToPickup = FVector::Distance(LastPlayerPosition, PickupItem->GetActorLocation());
+	}
+	else
+	{
+		DistanceFromPlayerToPickup = Cast<AActor>(PlayerCharacter)->GetHorizontalDistanceTo(PickupItem);
+	}
+
+	
 	if ((DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 10.f) && (!PickupItem->GetAttachParentActor()))
 	{
 		CurrentTarget = SetAllBotsRunToActor(PickupItem, PickupAcceptanceRadius);
 	}
 	
-	if (CurrentTarget)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Current target is %s"), *CurrentTarget->GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Current target is null"));
-	}
 }
 
 
@@ -92,7 +94,8 @@ void AAIGroupManager::SetAllBotsLookAtPlayer()
 {
 	for (auto BotItr : BotControllers)
 	{
-		BotItr->SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
+		if(BotItr)
+			BotItr->SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
 	}
 }
 
@@ -121,7 +124,7 @@ void AAIGroupManager::CheckReachedActor(AActor * MovingBot)
 	else if ( (CurrentTarget == PlayerCharacter) && (!PlayerCharacter->GetController()->IsMoveInputIgnored()) ) // if any bot reached player
 	{																									// and player can move
 		//UE_LOG(LogTemp, Warning, TEXT("Current target is Player, does have input"));
-		PlayerCharacter->GetController()->SetIgnoreMoveInput(true);								//(that means that this bot is first one)
+		TurnOffPlayerMovement();						//(that means that this bot is first one)
 		StopAllBotsMovement();
 		CurrentTarget = SurroundPlayer();	
 	}
@@ -167,15 +170,17 @@ void AAIGroupManager::CheckSurrounding()
 AActor* AAIGroupManager::SurroundPlayer()
 {
 	int32 BotIndex = 0;
+	LastPlayerPosition = PlayerCharacter->GetActorLocation();
+
 	for (auto BotItr : BotControllers)
 	{
-		if (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving)
+		if ((BotItr) && (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving))
 		{
 			FVector CircleLocation = PlayerCharacter->GetActorLocation() + LocationAroundPlayer(BotIndex++);
 
 			if (IsPositionReachable(BotItr->GetPawn()->GetActorLocation(), CircleLocation))
 			{
-				BotItr->MoveToLocation(CircleLocation);
+				BotItr->MoveToLocation(CircleLocation, 1.0f);
 			}
 			else
 			{
@@ -186,6 +191,12 @@ AActor* AAIGroupManager::SurroundPlayer()
 		}
 	}
 	return NULL;
+}
+
+void AAIGroupManager::TurnOffPlayerMovement()
+{
+	PlayerCharacter->GetController()->SetIgnoreMoveInput(true);
+	PlayerCharacter->GetRootComponent()->ComponentVelocity = FVector::ZeroVector;
 }
 
 bool AAIGroupManager::IsPositionReachable(FVector StartPosition, FVector TargetPosition)
@@ -208,4 +219,20 @@ FVector AAIGroupManager::LocationAroundPlayer(int32 BotIndex)
 	YCoord = MinDistanceToPlayer * FMath::Sin(BotIndex * AngleRad);
 
 	return FVector(XCoord, YCoord, 0.f);
+}
+
+void AAIGroupManager::EndGame()
+{
+	CurrentTarget = NULL;
+	StopAllBotsMovement();
+	
+	if (PickupItem->GetAttachParentActor())
+		DetachItemFromActor();
+
+	for (auto BotItr : BotControllers)
+	{
+		BotItr->GetPawn()->Destroy();
+		BotItr->Destroy();
+	}
+	Destroy();
 }

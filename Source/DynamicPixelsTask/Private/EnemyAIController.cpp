@@ -25,6 +25,4 @@ void AEnemyAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFoll
 	{
 		UE_LOG(LogTemp, Error, TEXT("No Manager"));
 	}
-	if(!Manager->WhichActorBotReached.IsBound())
-		UE_LOG(LogTemp, Warning, TEXT("Delegate is not bound"));
 }

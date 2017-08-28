@@ -16,7 +16,9 @@ AFPCharacter::AFPCharacter(const FObjectInitializer& ObjectInitializer)
 	PlayerRoot = ObjectInitializer.CreateDefaultSubobject<USceneComponent>(this, FName("RootComponent"), false);
 	PlayerRoot->SetupAttachment((USceneComponent*)GetCapsuleComponent()); // didnt take UCapsuleComponent for USceneComp
 	PlayerRoot->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
-	
+
+	RootComponent = GetCapsuleComponent();
+
 	/*Player's eyes*/
 	PlayerCamera = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, FName("PlayerCamera"), false);
 	PlayerCamera->SetupAttachment(PlayerRoot);
