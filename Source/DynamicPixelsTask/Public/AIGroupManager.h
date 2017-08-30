@@ -7,8 +7,6 @@
 #include "EnemyAIController.h"
 #include "AIGroupManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReachedPickup, AActor*, PickupItem);
-
 class APickUp;
 
 UCLASS()
@@ -22,19 +20,15 @@ public:
 	UPROPERTY(EditAnywhere)
 		float MinDistanceToPlayer = 200.f;
 	UPROPERTY(EditAnywhere)
-		float TakeItemDistance = 150.f;
+		float PickupAcceptanceRadius = 0.f;
 	UPROPERTY(EditAnywhere)
-		float PickupAcceptanceRadius = 150.f;
+		float TakeItemDistance = 130.f;
 	UPROPERTY(EditAnywhere)
 		FVector TakenItemPosition = FVector(120.f, 0.f, 50.f);
 	
 	UFUNCTION()
 		void CheckReachedActor(AActor* MovingBot);
 	void EndGame();
-
-
-	UPROPERTY(BlueprintAssignable)
-		FReachedPickup WhichActorBotReached;
 
 protected:
 	// Called when the game starts or when spawned
@@ -48,16 +42,13 @@ private:
 		TArray<AEnemyAIController*> BotControllers;
 
 	float DistanceFromPlayerToPickup = 0.f;
-	float AngleRad = 0.f;
 	int32 BotsSurroundedPlayer = 0;
-	FVector LastPlayerPosition = FVector::ZeroVector;;
+	FVector LastPlayerPosition = FVector::ZeroVector;
 
 	ACharacter* PlayerCharacter = NULL;
 	APickUp* PickupItem = NULL;
 	AActor* ReachedActor = NULL;
 	AActor* CurrentTarget = NULL;
-
-	EPathFollowingStatus::Type BotMoveStatus;
 
 	AActor* SetAllBotsRunToActor(AActor*, float AcceptanceDistance);
 	AActor* SurroundPlayer();

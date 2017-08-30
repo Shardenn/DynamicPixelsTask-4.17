@@ -18,7 +18,6 @@ void AEnemyAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFoll
 	AAIController::OnMoveCompleted(RequestID, Result);
 	if (Manager)
 	{
-		//Manager->WhichActorBotReached.Broadcast(GetPawn());
 		Manager->CheckReachedActor(GetPawn());
 	}
 	else

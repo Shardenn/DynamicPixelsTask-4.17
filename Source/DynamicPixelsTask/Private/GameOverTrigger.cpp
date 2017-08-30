@@ -2,10 +2,8 @@
 
 #include "GameOverTrigger.h"
 #include "Runtime/Engine/Classes/Components/BoxComponent.h"
-#include "../Public/EnemyAI.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "Engine.h"
-#include "PickUp.h"
 #include "AIGroupManager.h"
 
 // Sets default values
@@ -37,10 +35,11 @@ void AGameOverTrigger::Tick(float DeltaTime)
 }
 
 
-void AGameOverTrigger::OnActorOverlap(UPrimitiveComponent* OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+void AGameOverTrigger::OnActorOverlap(UPrimitiveComponent* OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComponent,
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
 	
-	if ((OtherActor) && (OtherActor == AActor::GetWorld()->GetFirstPlayerController()->GetPawn()) 
+	if ((OtherActor == AActor::GetWorld()->GetFirstPlayerController()->GetPawn()) 
 		&& (OtherComponent != NULL) && (!bGameEnded))
 	{
 		for (TActorIterator<AAIGroupManager>ManagerItr(AActor::GetWorld()); ManagerItr; ++ManagerItr)

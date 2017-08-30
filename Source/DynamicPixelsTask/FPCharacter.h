@@ -52,10 +52,6 @@ public:
 
 	FORCEINLINE class USceneComponent* GetPlayerCamera() const { return PlayerCamera;  }
 
-	// Used to give every bot a guaranteed unique number (needed for polar coords info)
-	int32 UniqueNumber = -1;
-	int32 GiveBotUniqueNumber();
-
 private:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

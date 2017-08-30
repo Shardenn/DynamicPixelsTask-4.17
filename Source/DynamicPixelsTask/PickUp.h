@@ -12,7 +12,7 @@ class DYNAMICPIXELSTASK_API APickUp : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+private:
 	// Sets default values for this actor's properties
 	APickUp(const FObjectInitializer& ObjectInitializer);
 

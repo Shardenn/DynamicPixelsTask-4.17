@@ -29,12 +29,6 @@ AFPCharacter::AFPCharacter(const FObjectInitializer& ObjectInitializer)
 																								//of actor and a bit forward
 }
 
-// Used to give every bot a guaranteed unique number (needed for polar coords info)
-int32 AFPCharacter::GiveBotUniqueNumber()
-{
-	return int32(++UniqueNumber);
-}
-
 // Called when the game starts or when spawned
 void AFPCharacter::BeginPlay()
 {
@@ -181,7 +175,9 @@ void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->Get
 	/*Getting all attached actors and takink [0] element as our picked up object*/
 	TArray<AActor*>PlayerAttachedActors;
 	this->GetAttachedActors(PlayerAttachedActors);
-	AActor* ItemTemp = PlayerAttachedActors[0];  // TODO check if there any object in array
+	if (!PlayerAttachedActors.Num())
+		return;
+	AActor* ItemTemp = PlayerAttachedActors[0]; 
 
 	/*Enabling physics and detaching item*/
 	Cast<APickUp>(ItemTemp)->TurnPhysicsOn(true);
@@ -189,6 +185,10 @@ void AFPCharacter::ThrowItem() // REMINDER: to get attached Sphere use this->Get
 	
 	/*Throwing object in view direction*/
 	FVector ThrowVector;
-	if(GetCrosshairLookDirection(ThrowVector))
+	if (GetCrosshairLookDirection(ThrowVector))
+	{
+		if(ThrowVector.Z > 0)
+			ThrowVector.Z *= 1.7;
 		Cast<UPrimitiveComponent>(ItemTemp->GetRootComponent())->AddImpulse(ThrowVector * ThrowImpulse);
+	}
 }

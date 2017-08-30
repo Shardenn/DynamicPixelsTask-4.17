@@ -2,11 +2,11 @@
 
 #include "AIGroupManager.h"
 #include "EngineUtils.h"
-#include "EnemyAIController.h"
 #include "PickUp.h"
 #include "GameFramework/Character.h"
 #include "Runtime/Engine/Classes/AI/Navigation/NavigationPath.h"
 #include "Runtime/Engine/Classes/AI/Navigation/NavigationSystem.h"
+#include "Runtime/Engine/Classes/GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AAIGroupManager::AAIGroupManager()
@@ -33,23 +33,25 @@ void AAIGroupManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//DistanceFromPlayerToPickup = Cast<AActor>(PlayerCharacter)->GetHorizontalDistanceTo(PickupItem); // Cast is needed, doesnt work otherwise
-
-	if (!CurrentTarget)
+	if(CurrentTarget)
 	{
-		DistanceFromPlayerToPickup = FVector::Distance(LastPlayerPosition, PickupItem->GetActorLocation());
+		LastPlayerPosition = PlayerCharacter->GetActorLocation();
+		UE_LOG(LogTemp, Warning, TEXT("Current target is %s"), *CurrentTarget->GetName());
 	}
 	else
 	{
-		DistanceFromPlayerToPickup = Cast<AActor>(PlayerCharacter)->GetHorizontalDistanceTo(PickupItem);
+		UE_LOG(LogTemp, Warning, TEXT("Current target is NULL"));
 	}
 
-	
-	if ((DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 10.f) && (!PickupItem->GetAttachParentActor()))
+	DistanceFromPlayerToPickup = FVector::DistXY(LastPlayerPosition, PickupItem->GetActorLocation());
+
+	UE_LOG(LogTemp, Warning, TEXT("Dist from player to puck up is  %f"), DistanceFromPlayerToPickup );
+	if ((DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 120.f) && (!PickupItem->GetAttachParentActor()))
 	{
 		CurrentTarget = SetAllBotsRunToActor(PickupItem, PickupAcceptanceRadius);
 	}
 	
+
 }
 
 
@@ -112,25 +114,29 @@ void AAIGroupManager::StopAllBotsMovement()
 void AAIGroupManager::CheckReachedActor(AActor * MovingBot)
 {
 	//StopAllBotsMovement();
-	
+	if (CurrentTarget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s reached %s"), *MovingBot->GetName(), *CurrentTarget->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s reached NULL"), *MovingBot->GetName());
+	}
 	//========================================
-	if ( (CurrentTarget == PickupItem) && (!PickupItem->GetAttachParentActor()) ) // If any bot reached ball and it doesnt have parent
+	if ( (CurrentTarget == PickupItem) && (!PickupItem->GetAttachParentActor()) && (MovingBot->GetHorizontalDistanceTo(PickupItem) <= TakeItemDistance)) // If any bot reached ball and it doesnt have parent
 	{	
-		//UE_LOG(LogTemp, Warning, TEXT("Current target is Pickup, does NOT have parent"));
 		AttachItemToActor(MovingBot);
 		StopAllBotsMovement();
-		CurrentTarget = SetAllBotsRunToActor(PlayerCharacter, MinDistanceToPlayer);	
+		CurrentTarget = SetAllBotsRunToActor(PlayerCharacter, MinDistanceToPlayer / 2.f);	
 	}
-	else if ( (CurrentTarget == PlayerCharacter) && (!PlayerCharacter->GetController()->IsMoveInputIgnored()) ) // if any bot reached player
-	{																									// and player can move
-		//UE_LOG(LogTemp, Warning, TEXT("Current target is Player, does have input"));
-		TurnOffPlayerMovement();						//(that means that this bot is first one)
+	else if ( (CurrentTarget == PlayerCharacter) && (!PlayerCharacter->GetController()->IsMoveInputIgnored()) ) 
+	{
+		TurnOffPlayerMovement();	
 		StopAllBotsMovement();
 		CurrentTarget = SurroundPlayer();	
 	}
 	else if (!CurrentTarget)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Current target is NULL"));
 		SetAllBotsLookAtPlayer();
 		CheckSurrounding();
 	}
@@ -139,8 +145,6 @@ void AAIGroupManager::CheckReachedActor(AActor * MovingBot)
 
 void AAIGroupManager::AttachItemToActor(AActor* Bot)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s is inside AttachItemToActor func"), *Bot->GetName());
-	// Turn off all physics and velocity
 	if (!PickupItem->GetAttachParentActor())
 	{
 		PickupItem->TurnPhysicsOn(false);
@@ -157,12 +161,16 @@ void AAIGroupManager::DetachItemFromActor()
 
 void AAIGroupManager::CheckSurrounding()
 {
-	if (++BotsSurroundedPlayer == BotControllers.Num())
+	if (PickupItem->GetAttachParentActor())
 	{
-		PickupItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		PickupItem->TurnPhysicsOn(true);
-		PlayerCharacter->GetController()->SetIgnoreMoveInput(false);
-		BotsSurroundedPlayer = 0;
+		BotsSurroundedPlayer++;
+		if (BotsSurroundedPlayer == BotControllers.Num())
+		{
+			BotsSurroundedPlayer = 0;  // two lines? 
+			DetachItemFromActor();
+			PlayerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+			PlayerCharacter->GetController()->SetIgnoreMoveInput(false);
+		}
 	}
 }
 
@@ -196,7 +204,8 @@ AActor* AAIGroupManager::SurroundPlayer()
 void AAIGroupManager::TurnOffPlayerMovement()
 {
 	PlayerCharacter->GetController()->SetIgnoreMoveInput(true);
-	PlayerCharacter->GetRootComponent()->ComponentVelocity = FVector::ZeroVector;
+	PlayerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None); 
+	PlayerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Falling);  // looks like shit, TODO think about another way
 }
 
 bool AAIGroupManager::IsPositionReachable(FVector StartPosition, FVector TargetPosition)
@@ -211,7 +220,7 @@ bool AAIGroupManager::IsPositionReachable(FVector StartPosition, FVector TargetP
 
 FVector AAIGroupManager::LocationAroundPlayer(int32 BotIndex)
 {
-	AngleRad = FMath::DegreesToRadians(360.f / BotControllers.Num());
+	float AngleRad = FMath::DegreesToRadians(360.f / BotControllers.Num());
 	float XCoord = 0.f;
 	float YCoord = 0.f;
 
