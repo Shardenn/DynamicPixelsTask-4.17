@@ -33,19 +33,13 @@ void AAIGroupManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if(CurrentTarget)
+	if (CurrentTarget)
 	{
 		LastPlayerPosition = PlayerCharacter->GetActorLocation();
-		UE_LOG(LogTemp, Warning, TEXT("Current target is %s"), *CurrentTarget->GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Current target is NULL"));
 	}
 
 	DistanceFromPlayerToPickup = FVector::DistXY(LastPlayerPosition, PickupItem->GetActorLocation());
 
-	UE_LOG(LogTemp, Warning, TEXT("Dist from player to puck up is  %f"), DistanceFromPlayerToPickup );
 	if ((DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 120.f) && (!PickupItem->GetAttachParentActor()))
 	{
 		CurrentTarget = SetAllBotsRunToActor(PickupItem, PickupAcceptanceRadius);
@@ -83,8 +77,9 @@ AActor* AAIGroupManager::SetAllBotsRunToActor(AActor * Target, float AcceptanceD
 {
 	for (auto BotItr : BotControllers)
 	{
-		if (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving)
+		if ( (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving) && ( BotItr->GetPawn()->GetDefaultHalfHeight() < Target->GetActorLocation().Z ) )
 		{
+			UE_LOG(LogTemp, Warning, TEXT("%s has half height of %f "), *BotItr->GetPawn()->GetName(), BotItr->GetPawn()->GetDefaultHalfHeight())
 			BotItr->ClearFocus(EAIFocusPriority::Gameplay);
 			BotItr->MoveToActor(Target, AcceptanceDistance);
 		}
@@ -114,14 +109,6 @@ void AAIGroupManager::StopAllBotsMovement()
 void AAIGroupManager::CheckReachedActor(AActor * MovingBot)
 {
 	//StopAllBotsMovement();
-	if (CurrentTarget)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s reached %s"), *MovingBot->GetName(), *CurrentTarget->GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s reached NULL"), *MovingBot->GetName());
-	}
 	//========================================
 	if ( (CurrentTarget == PickupItem) && (!PickupItem->GetAttachParentActor()) && (MovingBot->GetHorizontalDistanceTo(PickupItem) <= TakeItemDistance)) // If any bot reached ball and it doesnt have parent
 	{	
@@ -185,9 +172,13 @@ AActor* AAIGroupManager::SurroundPlayer()
 		if ((BotItr) && (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving))
 		{
 			FVector CircleLocation = PlayerCharacter->GetActorLocation() + LocationAroundPlayer(BotIndex++);
+			/*if (CircleLocation.Z > BotItr->GetPawn()->GetDefaultHalfHeight())
+				CircleLocation.Z = BotItr->GetPawn()->GetDefaultHalfHeight();*/
+			CircleLocation.Z = FMath::Min(CircleLocation.Z, BotItr->GetPawn()->GetDefaultHalfHeight());
 
 			if (IsPositionReachable(BotItr->GetPawn()->GetActorLocation(), CircleLocation))
 			{
+				
 				BotItr->MoveToLocation(CircleLocation, 1.0f);
 			}
 			else
