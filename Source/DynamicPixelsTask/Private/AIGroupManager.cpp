@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Runtime/Engine/Classes/AI/Navigation/NavigationPath.h"
 #include "Runtime/Engine/Classes/AI/Navigation/NavigationSystem.h"
-#include "Runtime/Engine/Classes/GameFramework/CharacterMovementComponent.h"
+#include "Runtime/Engine/Classes/GameFramework/CharacterMovementComponent.h" // GetCharacterMovement()
 
 // Sets default values
 AAIGroupManager::AAIGroupManager()
@@ -40,7 +40,7 @@ void AAIGroupManager::Tick(float DeltaTime)
 
 	DistanceFromPlayerToPickup = FVector::DistXY(LastPlayerPosition, PickupItem->GetActorLocation());
 
-	if ((DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 120.f) && (!PickupItem->GetAttachParentActor()))
+	if ((DistanceFromPlayerToPickup > MinDistanceToPlayer + TakeItemDistance + 50.f) && (!PickupItem->GetAttachParentActor()))
 	{
 		CurrentTarget = SetAllBotsRunToActor(PickupItem, PickupAcceptanceRadius);
 	}
@@ -79,7 +79,6 @@ AActor* AAIGroupManager::SetAllBotsRunToActor(AActor * Target, float AcceptanceD
 	{
 		if ( (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving) && ( BotItr->GetPawn()->GetDefaultHalfHeight() < Target->GetActorLocation().Z ) )
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s has half height of %f "), *BotItr->GetPawn()->GetName(), BotItr->GetPawn()->GetDefaultHalfHeight())
 			BotItr->ClearFocus(EAIFocusPriority::Gameplay);
 			BotItr->MoveToActor(Target, AcceptanceDistance);
 		}
@@ -172,19 +171,21 @@ AActor* AAIGroupManager::SurroundPlayer()
 		if ((BotItr) && (BotItr->GetMoveStatus() < EPathFollowingStatus::Moving))
 		{
 			FVector CircleLocation = PlayerCharacter->GetActorLocation() + LocationAroundPlayer(BotIndex++);
-			/*if (CircleLocation.Z > BotItr->GetPawn()->GetDefaultHalfHeight())
-				CircleLocation.Z = BotItr->GetPawn()->GetDefaultHalfHeight();*/
 			CircleLocation.Z = FMath::Min(CircleLocation.Z, BotItr->GetPawn()->GetDefaultHalfHeight());
 
 			if (IsPositionReachable(BotItr->GetPawn()->GetActorLocation(), CircleLocation))
 			{
-				
 				BotItr->MoveToLocation(CircleLocation, 1.0f);
 			}
 			else
 			{
-				BotItr->MoveToActor(PlayerCharacter, MinDistanceToPlayer);
+				UNavigationSystem* NavSystem = AActor::GetWorld()->GetNavigationSystem();
+				if (NavSystem)
+				{
+					CircleLocation = NavSystem->GetRandomPointInNavigableRadius(AActor::GetWorld(), PlayerCharacter->GetActorLocation(), MinDistanceToPlayer * 2.f);
+				}
 			}
+			BotItr->MoveToLocation(CircleLocation, 0.f);
 			//BotItr->SetFocus(PlayerCharacter, EAIFocusPriority::Gameplay);
 
 		}
@@ -202,7 +203,7 @@ void AAIGroupManager::TurnOffPlayerMovement()
 bool AAIGroupManager::IsPositionReachable(FVector StartPosition, FVector TargetPosition)
 {
 	UNavigationPath* NavPath = UNavigationSystem::FindPathToLocationSynchronously(GetWorld(), StartPosition, TargetPosition, NULL);
-
+	
 	if (!NavPath)
 		return false;
 
